@@ -4,4 +4,4 @@ rm -f *~
 
 git add -A
 git commit -m "auto-backup"
-git push origin master
+git push origin main
