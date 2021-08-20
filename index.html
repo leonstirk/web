@@ -308,8 +308,8 @@ rm(i, stop, rows, url_page)
 
 ## Melt paginated data together
 df &lt;- bind_rows(lapply(dat, function(x) {
-  fromJSON(content(x, as='text'))$List %&gt;%
-  as.data.frame() }))
+  fromJSON(content(x, as='text'))$List %&gt;% as.data.frame() }
+))
 
 	  </code>
 	</pre>
