@@ -226,18 +226,95 @@ result
 	<p>
 	  At this stage it's only really important that
 	  the <code>result</code> has come back with
-	  a <code>200</code> status code.
+	  a <code>200</code> status code. We can pull the JSON content
+	  out using the <code>jsonlite</code> package.
+	</p>
 	
 	<pre>
 	  <code>
 dat <- fromJSON(content(result, as='text'))
+dat$List %>% as_tibble()		   
 	  </code>
 	</pre>
-	
+
 	<h6 class="docs-header">API Pagination</h6>
 	<p>
-	  
+	  The <code>dat$List</code> object is the content of the
+	  search query that we want but the the Trademe API returns
+	  only the first 50 items by default. We can see from the
+	  dat$TotalCount object that there are 12631 residential
+	  property listings across New Zealand as a whole.
 	</p>
+
+	<pre>
+	  <code>
+dat$TotalCount
+[1] 12631
+	  </code>
+	</pre>
+
+	<p>
+	  To get all of the listings we'll need to add some query
+	  string parameters to the request url. The relevant
+	  parameters are <code>rows</code> and <code>page</code>.
+	  We can
+	  see <a href="https://developer.trademe.co.nz/api-reference/search-methods/residential-search">in
+	  the docs</a> the following:
+	</p>
+
+	<table class="u-full-width">
+	  <thead>
+	  </thead>
+	  <tbody>
+	    <tr>
+	      <td>page</td>
+	      <td>Integer (optional)</td>
+	      <td>The page number of the set of results to return,
+	      starting from 1. Defaults to 1.</td>
+	    </tr>
+	    <tr>
+	      <td>rows</td>
+	      <td>Integer (optional) </td>
+	      <td>The number of results per page; also the maximum
+	      number of results to return. The maximum is 25 for
+	      unauthenticated requests and 500 for authenticated
+	      requests. Defaults to 25 (unauthenticated) or 50 (authenticated).</td>
+	    </tr>
+	  </tbody>
+	</table>
+
+	<p>
+	  We can write a loop that will iterate over the required
+	  number of pages where each page returns 500 listings. We can
+	  then melt all the paginated data into a single dataframe
+	  that we can analyse.
+	</p>
+
+	<pre>
+	  <code>
+## Request loop
+rows &lt;- 500
+stop &lt;- 0
+i &lt;- 1
+dat &lt;- list()
+while(stop &gt; 1) {
+  url_page &lt;- paste0(url,'&rows=',rows,'&page=',i)
+  tmp &lt;- GET(url_page, add_headers(Authorization = header))
+  dat[[i]] &lt;- tmp
+  stop &lt;- if(ceiling(fromJSON(content(tmp, as='text'))$TotalCount/rows) == i){1}else{0}
+  i &lt;- i+1
+}
+rm(i, stop, rows, url_page)
+
+## Melt paginated data together
+df &lt;- bind_rows(lapply(dat, function(x) {
+  fromJSON(content(x, as='text'))$List %&gt;%
+  as.data.frame() }))
+
+	  </code>
+	</pre>
+
+	
       </div>
       
       
