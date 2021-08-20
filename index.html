@@ -24,16 +24,17 @@
 	<h2 class="title">Hi there. I'm Leon</h2>
 	<div class="value-props row">
 	  <div class="four columns value-prop">
-	    <img class="value-img" src="images/feather.svg">
-	    Light as a feather at ~400 lines &amp; built with mobile in mind.
+	    <img class="value-img" src="images/hat.svg">
+	    I'm doing a PhD in economics at Otago.
 	  </div>
 	  <div class="four columns value-prop">
-	    <img class="value-img" src="images/pens.svg">
-	    Styles designed to be a starting point, not a UI framework.
+	    <img class="value-img" src="images/house.svg">
+	    I work in housing and urban economics.
 	  </div>
 	  <div class="four columns value-prop">
-	    <img class="value-img" src="images/watch.svg">
-	    Quick to start with zero compiling or installing necessary.
+	    <img class="value-img" src="images/bot.svg">
+	    I'm pretty good at computational modelling and machine
+	    learning methods.
 	  </div>
 	</div>
       </section>
@@ -85,63 +86,9 @@
       </nav>
 
       <div class="docs-section" id="code">
-	<h6 class="docs-header">Code</h6>
-        <p>Code styling is kept basic â just wrap anything
-	  in a <code>&lt;code&gt;</code> and it will appear
-	  like <code>this</code>. For blocks of code, wrap
-	  a <code>&lt;code&gt;</code> with a <code>&lt;pre&gt;</code>.</p>
-	<div class="docs-example">
-	  <pre><code>.some-class {
-	      background-color: red;
-	      }</code></pre>
-	</div>
-
-	<pre class="code-example"><code class="code-example-body prettyprint">
-	    Hello this is some code	      
-	  </code>
-	</pre>
-      </div>
-
-      <div class="docs-section" id="code">
-	<h6 class="docs-header">Code</h6>
-        <p>Code styling is kept basic â just wrap anything
-	  in a <code>&lt;code&gt;</code> and it will appear
-	  like <code>this</code>. For blocks of code, wrap
-	  a <code>&lt;code&gt;</code> with a <code>&lt;pre&gt;</code>.</p>
-	<div class="docs-example">
-	  <pre><code>.some-class {
-	      background-color: red;
-	      }</code></pre>
-	</div>
-
-	<pre class="code-example"><code class="code-example-body prettyprint">
-	    Hello this is some code	      
-	  </code>
-	</pre>
-      </div>
-
-      <div class="docs-section" id="code">
-	<h6 class="docs-header">Code</h6>
-        <p>Code styling is kept basic â just wrap anything
-	  in a <code>&lt;code&gt;</code> and it will appear
-	  like <code>this</code>. For blocks of code, wrap
-	  a <code>&lt;code&gt;</code> with a <code>&lt;pre&gt;</code>.</p>
-	<div class="docs-example">
-	  <pre><code>.some-class {
-	      background-color: red;
-	      }</code></pre>
-	</div>
-
-	<pre class="code-example"><code class="code-example-body prettyprint">
-	    Hello this is some code	      
-	  </code>
-	</pre>
-      </div>
-
-      <div class="docs-section" id="code">
         <h4 class="">Access Trademe API with R</h4>
 	<p>
-	  Trademe has a really great API and for a long time now I've
+	  Trademe has a really great API, and for a long time now I've
 	  wanted to have a play around with it. I registered an app
 	  forever ago and it has sat unused because I could never be
 	  bothered working out how to authenticate my requests
@@ -157,11 +104,11 @@
 	  to <a href="https://developer.trademe.co.nz/api-overview/registering-an-application">
 	  register an application</a>. This is a pretty
 	  straightforward process but you should familiarise yourself
-	  with the terms of use.
+	  with the <a href="https://developer.trademe.co.nz/terms-and-conditions">terms of use</a>.
 	</p>
 	<h6 class="docs-header">Get consumer keys</h6>
 	<p>
-	  Once your application is approved you can go to your account
+	  Once your application is approved you can go to your Trademe account
 	  and access your API applications. Going into
 	  the <a href="https://www.trademe.co.nz/MyTradeMe/Api/DeveloperOptions.aspx">
 	  Developer options</a> will allow you to retrieve
@@ -265,6 +212,28 @@ result
 
 	  </code>
 	</pre>
+	
+	<pre>
+	  <code>
+## Response [https://api.trademe.co.nz/v1/Search/Property/Residential.json]
+## Date: 2021-08-20 15:21
+## Status: 200
+## Content-Type: application/json
+## Size: 162 kB
+	  </code>
+	</pre>
+
+	<p>
+	  At this stage it's only really important that
+	  the <code>result</code> has come back with
+	  a <code>200</code> status code.
+	
+	<pre>
+	  <code>
+dat <- fromJSON(content(result, as='text'))
+	  </code>
+	</pre>
+	
 	<h6 class="docs-header">API Pagination</h6>
 	<p>
 	  
