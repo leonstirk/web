@@ -19,7 +19,13 @@
     <link rel="icon" type="image/png" href="assets/images/favicon.png">
     <!-- Load html includes -->
     <script>
-      $(function(){ $("#includedContent").load("b.html"); });
+      $(function () {
+	  var includes = $('[data-include]')
+	  $.each(includes, function () {
+	      var file = 'views/' + $(this).data('include') + '.html'
+	      $(this).load(file)
+	  })
+      })
     </script>
   </head>
   <body>
@@ -99,6 +105,10 @@
       <div class="docs-section" id="code">
 	<div id="includedContent"></div>	
       </div>
+
+      <div data-include="b"></div>
+
+      
       <div class="docs-section" id="code">
         <h4 class="">Access Trademe API with R</h4>
 	<p>
