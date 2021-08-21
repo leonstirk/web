@@ -102,8 +102,11 @@
 	</div>
       </nav>
 
+      <div class="docs-section" id="code">
+	<div id="includedContent"></div>	
+      </div>
 
-      <div data-include="trademe_api"></div>
+      <div data-include="b"></div>
 
       
       <div class="docs-section" id="code">
