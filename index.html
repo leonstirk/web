@@ -297,7 +297,7 @@ rows &lt;- 500
 stop &lt;- 0
 i &lt;- 1
 dat &lt;- list()
-while(stop &gt; 1) {
+while(stop &lt; 1) {
   url_page &lt;- paste0(url,'&rows=',rows,'&page=',i)
   tmp &lt;- GET(url_page, add_headers(Authorization = header))
   dat[[i]] &lt;- tmp
