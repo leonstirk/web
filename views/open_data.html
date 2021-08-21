@@ -12,6 +12,9 @@
 
   <pre>
     <code>
+library(httr)
+library(jsonlite)
+      
 result &lt;- GET('https://catalogue.data.govt.nz/api/3/action/package_list')
 dat &lt;- fromJSON(content(result, as='text'))
 dat$result
