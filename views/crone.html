@@ -1,0 +1,25 @@
+<div class="docs-section">
+  <h4 class="">Using crontab</h4>
+  <p>
+    Data scraping can be really useful. There are instances though
+    where it would be useful to be able to observe that data through
+    time but the source that you're scraping doesn't keep historical data
+    kicking around. One solution is to scrape the source of data at regular intervals to
+    make your own series. This of course comes with a bunch of it's
+    own problems and it's no replacement for getting your hands on
+    historic data i.e. you can only start building a series from today.
+  </p>
+  <h6 class="docs-header"></h6>
+  <p>
+    <pre>
+      <code>
+alias crone="env VISUAL=nano crontab -e"
+      </code>
+    </pre>
+  </p>
+  <pre>
+    <code>
+30 9 * * * sh ~/Desktop/projects/web/gitBackup.sh
+    </code>
+  </pre> 
+</div>
