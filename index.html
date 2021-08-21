@@ -327,6 +327,12 @@ df &lt;- bind_rows(lapply(dat, function(x) {
 	  Having said that, there is a fair amount of data cleaning that is probably
 	  required if any of it is going to be useful.
 	</p>
+	<p>
+	  There are any number of ways to approach the data cleaning. And there
+	  are a huge number of variables to potentially sort
+	  through. The code above provides only a few examples of
+	  cleaning operations on some of the variables.
+	</p>
 
 	<pre><code>
 df$ListingId &lt;- as.character(df$ListingId)
@@ -348,13 +354,13 @@ df$EndDate   &lt;- convDate(df$EndDate)
 df$AsAt &lt;- convDate(df$AsAt)
 
 df$IsNew &lt;- sapply(df$IsNew, function(x) { if(!is.na(x) & x == TRUE){1}else{0} })
-
-
-tmp_sf &lt;- st_as_sf(x = df$GeographicLocation %&gt;% select(Longitude, Latitude),
-                      coords = c('Longitude', 'Latitude'), crs = 4326)
-tmp_sf &lt- cbind(tmp_sf, df[c('RateableValue', 'price_integer')])
-
 	</code></pre>
+
+	<p>
+
+	  
+	</p>
+	
 	<pre><code>
 library(sf)
 
