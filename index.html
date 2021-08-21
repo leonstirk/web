@@ -330,34 +330,22 @@ df &lt;- bind_rows(lapply(dat, function(x) {
 	<p>
 	  There are any number of ways to approach the data cleaning. And there
 	  are a huge number of variables to potentially sort
-	  through. The code above provides only a few examples of
-	  cleaning operations on some of the variables.
+	  through. I've only provided a couple of snippets here that
+	  might be useful generally.
 	</p>
 	<p>
-	  <code>ListingId</code> is a unique identifier so is likely
-	  most appropriate in a character
-	  format. <code>CategoryPath</code> is not neccessary if we
-	  want to access individual listings later
-	  (the <code>ListingId</code> string is sufficient) but it's a
-	  useful indicator of the type of listing (Section, House,
-	  Apartment, etc). I have just dropped the unnecessary part of
-	  the string and converted it to a factor variable. Likewise
-	  the boolean <code>IsNew</code> is more usefully converted
-	  into a dummy variable where the <code>NULL</code>
-	  and <code>FALSE</code> are folded together.
+	  I found that the datetime format from Trademe
+	  wasn't immediately obvious. I eventually figured out that it was the
+	  milliseconds from the UNIX epoch so I wrote a little
+	  conversion function to convert the formats for all the date
+	  variables. I have converted them to the R Date format
+	  because I cant see the specific time being useful for me but
+	  you could convert it to the DateTime format insted.
 	</p>
-	<pre><code>
-df$ListingId &lt;- as.character(df$ListingId)
 
-df$CategoryPath %&gt;% as.factor() %&gt;% levels()
-## 
-df$CategoryPath &lt;- df$CategoryPath %&gt;% str_remove_all('/Trade-Me-Property/') %>% as.factor()
-df$CategoryPath %&gt;% levels()
-
-df$IsNew &lt;- sapply(df$IsNew, function(x) { if(!is.na(x) & x ==
-TRUE){1}else{0} })
-
-## Date variables
+	<pre>
+	  <code>
+## Date variable conversion
 convDate &lt;- function(x) {
   as.Date((x %&gt;% str_remove_all('[/Date()]') %&gt% as.numeric())/1000/60/60/24, origin = "1970-01-01")
 }
@@ -365,38 +353,58 @@ convDate &lt;- function(x) {
 df$StartDate &lt;- convDate(df$StartDate)
 df$EndDate   &lt;- convDate(df$EndDate)
 df$AsAt &lt;- convDate(df$AsAt)
+	  </code>
+	</pre>
 
+	<p>
+	  Trademe handles property prices in
+	  the <code>PriceDisplay</code> variable. And there are a
+	  bunch of different values that this can take on (deadlne
+	  sale, auction, enquiries over, asking price, etc). Only
+	  'asking price' and 'enquiries over' have an associated
+	  numeric value. To reflect this I've tried to split
+	  the <code>PriceDisplay</code> variable into two parts: the
+	  integer component wherever one appears; and a categorical
+	  variable capturing the non-numeric component (whether it is
+	  a deadline sale, auction, asking price, etc).
+	</p>
+	
+	<pre>
+	  <code>
 ## Price variables
 df$price_integer &lt;- df$PriceDisplay %&gt;% str_extract_all('\\d') %&gt;%
   lapply(., function(x) { paste(x, collapse = '') }) %&gt;% unlist %&gt;% as.integer()
 
 df$price_category &lt;- df$PriceDisplay %&gt;% str_extract_all('[^\\d:,$]') %&gt;%
   lapply(., function(x) { paste(x, collapse = '') }) %&gt;% unlist %&gt;% str_remove(' $') %>% as.factor
-
-	</code></pre>
+	  </code>
+	</pre>
 
 	<p>
-
-	  
+	  Another useful thing we might want to do is to be able to
+	  visualise all the data spatially. We can use
+	  the <code>sf</code> package to turn our dataframe into a
+	  simple features object and them use the <code>tmap</code>
+	  package to plot it.
 	</p>
 	
-	<pre><code>
+	<pre>
+	  <code>
 library(sf)
+library(tmap)
 
 df$lon &lt;- df$GeographicLocation$Longitude
 df$lat &lt;- df$GeographicLocation$Latitude
 
-df_sf &lt;- st_as_sf(x = df, coords = c('Longitude', 'Latitude'), crs = 4326)
-	</code></pre>
-	
-	<pre><code>
-## Visualise
-library(tmap)
-tmap_mode('view')
-tm_shape(tmp_sf) + tm_dots()
-	</code></pre>
+df_sf &lt;- st_as_sf(x = df, coords = c('lon', 'lat'), crs = 4326)
 
-	<img class="u-max-full-width" src="images/trademe_api_spatial_plot.jpg">
+## Visualise
+tmap_mode('view')
+tm_shape(df_sf %&gt;% select(geometry) + tm_dots()
+	  </code>
+	</pre>
+	
+	<img class="u-max-full-width" src="images/trademe_api_spatial_plot.png">
 	
       </div>
       
