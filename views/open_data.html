@@ -1,14 +1,13 @@
 <div class="docs-section">
-  <h4 class="">NZ Government open data - exploring data.govt</h4>
+  <h4 class="">NZ Government open data - exploring data.govt.nz</h4>
   <p>
-    Ah democracy. This is a wonderful resource.
+    Ah democracy. Transparency. This is a wonderful resource.
   </p>
   <h6 class="docs-header">Title</h6>
 
-
   <p>
     We can get just a raw list of all the datasets names with
-    <code>package-list</code>.
+    <code>package_list</code>.
   </p>
 
   <pre>
@@ -24,8 +23,14 @@ dat$result
     <a href="https://www.data.govt.nz/catalogue-guide/using-data-govt-nz-apis/accessing-dataset-metadata-via-api/">The
     data.govt catalogue guide</a> points us to
     the <a href="https://docs.ckan.org/en/latest/api/index.html">CKAN
-      docs</a> Where we can see that the maximum number of rows is 
-    Rows max out at 1000
+      docs</a> Where we can see that the maximum number of rows is
+    1000. I'm kind of surprised <code>package_search</code> takes an
+    open query. I hope that some government drone doesn't change this
+    but let's be real, people would find a way. I guess that's the
+    nice thing about transparency. It's not something you get to do
+    halfway. Which is why OIA's are such a joke. Sometimes it feels
+    like they're the mechanism by which the government is the writer
+    of it's own report cards. I digress.
   </p>
 
   <table class="u-full-width">
@@ -33,18 +38,52 @@ dat$result
     </thead>
     <tbody>
       <tr>
-	<td><b>rows</b> (int)</td>
+	<td><b>rows</b></td>
+	<td><i>int</i></td>
 	<td>The maximum number of matching rows (datasets)
 	  to return. (optional, default: 10, upper limit: 1000 unless set in
 	  site's configuration ckan.search.rows_max)</td>
       </tr>
       <tr>
-	<td><b>start</b> (int)</td>
+	<td><b>start</b></td>
+	<td><i>int</i></td>
 	<td>The offset in the complete result for where the set of
 	returned datasets should begin.</td>
       </tr>
     </tbody>
-</table>
+  </table>
+
+  <p>
+    I guess it wouldn't be that hard to loop over this and get
+    complete metadata for every available dataset.
+  </p>
+
+  <pre>
+    <code>
+## Request loop
+rows &lt;- 500
+stop &lt;- 0
+i &lt;- 1
+dat &lt;- list()
+while(stop &lt; 1) {
+url_page &lt;- paste0(url,'?rows=',rows,'&page=',i)
+tmp &lt;- GET(url_page, add_headers(Authorization = header))
+dat[[i]] &lt;- tmp
+stop &lt;- if(ceiling(fromJSON(content(tmp,
+as='text'))$TotalCount/rows) == i){1}else{0}
+i &lt;- i+1
+}
+rm(i, stop, rows, url_page)
+
+## Melt paginated data together
+df &lt;- bind_rows(lapply(dat, function(x) {
+fromJSON(content(x, as='text'))$List %&gt;% as.data.frame() }
+))
+
+       
+      
+    </code>
+  </pre>
   
   
   
