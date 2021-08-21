@@ -298,7 +298,7 @@ stop &lt;- 0
 i &lt;- 1
 dat &lt;- list()
 while(stop &lt; 1) {
-  url_page &lt;- paste0(url,'&rows=',rows,'&page=',i)
+  url_page &lt;- paste0(url,'?rows=',rows,'&page=',i)
   tmp &lt;- GET(url_page, add_headers(Authorization = header))
   dat[[i]] &lt;- tmp
   stop &lt;- if(ceiling(fromJSON(content(tmp, as='text'))$TotalCount/rows) == i){1}else{0}
