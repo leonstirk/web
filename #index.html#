@@ -405,7 +405,25 @@ tm_shape(df_sf %&gt;% select(geometry) + tm_dots()
 	</pre>
 	
 	<img class="u-max-full-width" src="assets/images/trademe_api_spatial_plot.png">
-	
+
+	<p>
+	  Amusingly one of the observations looks like it's in
+	  Australia. A bit of manual checking confirmed that it was a
+	  genuine error and the listing in question was supposed to be
+	  in Hamilton somewhere.
+	</p>
+
+	<p>
+	  For those that read <a href="https://www.blakeporterneuro.com/learning-python-project-2-how-to-find-the-best-price-on-trademe">Blake Porters blog post</a> that I mentioned
+	  earlier (and you should). I would just gently observe that I
+	  don't think this data is particularly good for model
+	  building. I would certainly be taking any inferences drawn from models
+	  built using this data with a real grain of salt. That said
+	  there was nothing wrong with the modelling approach in
+	  general.
+	</p>
+	<p>
+	  
       </div>
       
       
