@@ -58,36 +58,41 @@ dat$result
 
   <p>
     I guess it wouldn't be that hard to loop over this and get
-    complete metadata for every available dataset.
+    complete metadata for every available dataset. I cribbed this loop
+    from the loop I wrote to do the same operation for the paginated
+    Trademe API results. It's a little bit hacky but I guess it works.
   </p>
 
   <pre>
     <code>
-## Request loop
-rows &lt;- 500
+## API request loop
+rows &lt;- 1000
 stop &lt;- 0
 i &lt;- 1
+start &lt;- i
 dat &lt;- list()
 while(stop &lt; 1) {
-url_page &lt;- paste0(url,'?rows=',rows,'&page=',i)
-tmp &lt;- GET(url_page, add_headers(Authorization = header))
-dat[[i]] &lt;- tmp
-stop &lt;- if(ceiling(fromJSON(content(tmp,
-as='text'))$TotalCount/rows) == i){1}else{0}
-i &lt;- i+1
+  url_page &lt;- paste0(url,'?rows=',rows,'&start=',start)
+  tmp &lt;- GET(url_page)
+  dat[[i]] &lt;- tmp
+  stop &lt;- if(fromJSON(content(tmp, as='text'))$result$count &lt;=
+  start + rows){1}else{0}
+  start &lt;- start+rows
+  i &lt;- i+1
 }
-rm(i, stop, rows, url_page)
+rm(i, stop, start, rows, url_page)
 
-## Melt paginated data together
+## melt paginated data together
 df &lt;- bind_rows(lapply(dat, function(x) {
-fromJSON(content(x, as='text'))$List %&gt;% as.data.frame() }
+  fromJSON(content(x, as='text'))$result$results %&gt;%
+  as.data.frame() }
 ))
-
-       
-      
     </code>
   </pre>
-  
+
+  <p>
+
+  </p>
   
   
 </div>
