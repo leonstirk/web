@@ -1,0 +1,362 @@
+<div class="docs-section">
+  <h4 class="">Access Trademe API with R</h4>
+  <p>
+    Trademe has a really great API, and for a long time now I've
+    wanted to have a play around with it. I registered an app
+    forever ago and it has sat unused because I could never be
+    bothered working out how to authenticate my requests
+    properly. Recently I came across a blog post
+    by <a href="https://www.blakeporterneuro.com/learning-python-project-2-how-to-find-the-best-price-on-trademe">
+      Blake Porter</a> that helped me to get 
+    everything working. He was scripting in Python so I've ported
+    that code over to R.
+  </p>
+  <h6 class="docs-header">Register a trademe app</h6>
+  <p> To do anything useful with the API on the live site you'll
+    need
+    to <a href="https://developer.trademe.co.nz/api-overview/registering-an-application">
+      register an application</a>. This is a pretty
+    straightforward process but you should familiarise yourself
+    with the <a href="https://developer.trademe.co.nz/terms-and-conditions">terms of use</a>.
+  </p>
+  <h6 class="docs-header">Get consumer keys</h6>
+  <p>
+    Once your application is approved you can go to your Trademe account
+    and access your API applications. Going into
+    the <a href="https://www.trademe.co.nz/MyTradeMe/Api/DeveloperOptions.aspx">
+      Developer options</a> will allow you to retrieve
+    your <b>Consumer key</b> and <b>Consumer secret</b>
+    strings.
+  </p>
+  <h6 class="docs-header">Get OAuth tokens</h6>
+  <p>
+    The API uses OAuth to authenticate requests. I had intended
+    only to access the data for personal use so I didn't need
+    to implement most of the OAuth process. Instead I just
+    generated my own set of OAuth keys using the
+    <a href="https://www.trademe.co.nz/MyTradeMe/Api/DeveloperOptions.aspx">
+      form that TradeMe provides for that purpose</a>. Just
+    remember when generating the OAuth keys that you
+    set <b>Environment</b> to 'Production'. I was only
+    interested in reading data so I only bothered selecting
+    'MyTradeMeRead' in the <b>Permissions</b> section.
+  </p>
+  <p> At the end of this you'll have a <b>Consumer
+      key</b>, <b>Consumer secret</b>, <b>OAuth Token</b>
+    and <b>OAuth Token Secret</b>.
+  </p>
+  <p>
+    One thing that is really important (and this took me forever
+    to realise in the API docs) is that the <b>OAuth
+      Signature</b> that is required is just the <b>Consumer secret</b>
+    and the <b>OAuth Token Secret</b> seperated by a
+    UTF-encoded ampersand i.e. <code>%26</code>. So when the docs talk about
+    an <b>OAuth Signature</b> they
+    want <code>whatever_your_consumer_secret_is%26whatever_your_oauth_token_secret_is</code>
+    <h6 class="docs-header">API methods</h6>
+  <p>
+    The API allows you to do quite a lot of stuff and there is
+    <a href="https://developer.trademe.co.nz/api-reference">quite
+      a good reference for all the API methods that are
+      available</a>. I was only really interested in
+    doing a search
+    for <a href="https://developer.trademe.co.nz/api-reference/search-methods/residential-search">
+      residential property listings</a> so that's where I
+    went. I just had a quick look at the table at the top of
+    that page. The important bits look something like this:
+  </p>
+  <table class="u-full-width">
+    <thead>
+    </thead>
+    <tbody>
+      <tr>
+	<td>URL:</td>
+	<td>https://api.trademe.co.nz/v1/Search/Property/Residential.{file_format}</td>
+      </tr>
+      <tr>
+	<td>HTTP Method:</td>
+	<td>GET</td>
+      </tr>
+      <tr>
+	<td>Supported Formats:</td>
+	<td>XML, JSON</td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <h6 class="docs-header">Make API calls from R</h6>
+  <p>
+    At this stage we can open up an R session and start making some API
+    calls.
+  </p>
+  <p>
+    I'm going to use the <code>httr</code> library to handle
+    the <code>GET</code> requests. I find JSON easy to work
+    with so I'm going to request json as the file format and use
+    the <code>jsonlite</code> package to process the JSON
+    output.
+  </p>
+  <p>
+    The code below assignes all the keys to variables and then
+    generates the appropriate authorisation <code>header</code> to add to the
+    <code>GET</code> request.
+    
+    <pre>
+      <code>
+library(tidyverse)
+library(httr)
+library(jsonlite)
+
+url &lt;- 'https://api.trademe.co.nz/v1/Search/Property/Residential.json'
+
+oauth_consumer_key &lt;- 'put_your_consumer_key_here'
+oauth_token &lt;- 'put_your_oauth_token_here'
+oauth_signature_method &lt;- 'PLAINTEXT'
+oauth_signature &lt;- 'put_your_oauth_signature_here'
+
+header &lt;- paste('OAuth oauth_consumer_key=', oauth_consumer_key,
+                   ',oauth_token=', oauth_token,
+                   ',oauth_signature_method=', oauth_signature_method,
+                   ',oauth_signature=', oauth_signature,
+                   sep = '')
+
+result &lt;- GET(url, add_headers(Authorization = header))
+      </code>
+    </pre>
+    
+    <pre>
+      <code>
+result
+	    
+## Response [https://api.trademe.co.nz/v1/Search/Property/Residential.json]
+## Date: 2021-08-20 15:21
+## Status: 200
+## Content-Type: application/json
+## Size: 162 kB
+      </code>
+    </pre>
+
+  <p>
+    At this stage it's only really important that
+    the <code>result</code> has come back with
+    a <code>200</code> (OK) status code. We can pull the JSON content
+    out using the <code>jsonlite</code> package.
+  </p>
+  
+  <pre>
+    <code>
+dat &lt;- fromJSON(content(result, as='text'))
+dat$List %&gt;% as_tibble()
+    </code>
+  </pre>
+
+  <h6 class="docs-header">API Pagination</h6>
+  <p>
+    The <code>dat$List</code> object is the content of the
+    search query that we want but the the Trademe API returns
+    only the first 50 items by default. We can see from the
+    dat$TotalCount object that there are 12631 residential
+    property listings across New Zealand as a whole.
+  </p>
+
+  <pre>
+    <code>
+dat$TotalCount
+## [1] 12631
+    </code>
+  </pre>
+
+  <p>
+    To get all of the listings we'll need to add some query
+    string parameters to the request url. The relevant
+    parameters are <code>rows</code> and <code>page</code>.
+    We can see the entries for these query
+    parameters <a href="https://developer.trademe.co.nz/api-reference/search-methods/residential-search">in
+      the docs</a> look something like this:
+  </p>
+
+  <table class="u-full-width">
+    <thead>
+    </thead>
+    <tbody>
+      <tr>
+	<td>page</td>
+	<td>Integer (optional)</td>
+	<td>The page number of the set of results to return,
+	  starting from 1. Defaults to 1.</td>
+      </tr>
+      <tr>
+	<td>rows</td>
+	<td>Integer (optional) </td>
+	<td>The number of results per page; also the maximum
+	  number of results to return. The maximum is 25 for
+	  unauthenticated requests and 500 for authenticated
+	  requests. Defaults to 25 (unauthenticated) or 50 (authenticated).</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>
+    We can write a loop that will iterate over the required
+    number of pages where each page returns 500 listings. We can
+    then melt all the paginated data into a single dataframe
+    that we can analyse.
+  </p>
+
+  <pre>
+    <code>
+## Request loop
+rows &lt;- 500
+stop &lt;- 0
+i &lt;- 1
+dat &lt;- list()
+while(stop &lt; 1) {
+  url_page &lt;- paste0(url,'?rows=',rows,'&page=',i)
+  tmp &lt;- GET(url_page, add_headers(Authorization = header))
+  dat[[i]] &lt;- tmp
+  stop &lt;- if(ceiling(fromJSON(content(tmp, as='text'))$TotalCount/rows) == i){1}else{0}
+  i &lt;- i+1
+}
+rm(i, stop, rows, url_page)
+
+## Melt paginated data together
+df &lt;- bind_rows(lapply(dat, function(x) {
+  fromJSON(content(x, as='text'))$List %&gt;% as.data.frame() }
+))
+
+    </code>
+  </pre>
+
+  <h6 class="docs-header">Data cleaning</h6>
+  <p>
+    At this point you should have enough with
+    the <code>df</code> data frame to get to work on
+    whatever analysis you want to do, bearing in mind
+    those <a href="https://developer.trademe.co.nz/terms-and-conditions">terms
+      of use</a>. That is to say that we've got the data off of
+    Trademe into a useable format in R for analysis.
+  </p>
+  <p>
+    Having said that, there is a fair amount of data cleaning that is probably
+    required if any of it is going to be useful.
+  </p>
+  <p>
+    There are any number of ways to approach the data cleaning. And there
+    are a huge number of variables to potentially sort
+    through. I've only provided a couple of snippets here that
+    might be useful generally.
+  </p>
+  <p>
+    I found that the datetime format from Trademe
+    wasn't immediately obvious. I eventually figured out that it was the
+    milliseconds from the UNIX epoch so I wrote a little
+    conversion function to convert the formats for all the date
+    variables. I have converted them to the R Date format
+    because I cant see the specific time being useful for me but
+    you could convert it to the DateTime format insted.
+  </p>
+
+  <pre>
+    <code>
+## Date variable conversion
+convDate &lt;- function(x) {
+  as.Date((x %&gt;% str_remove_all('[/Date()]') %&gt% as.numeric())/1000/60/60/24, origin = "1970-01-01")
+}
+
+df$StartDate &lt;- convDate(df$StartDate)
+df$EndDate   &lt;- convDate(df$EndDate)
+df$AsAt &lt;- convDate(df$AsAt)
+    </code>
+  </pre>
+
+  <p>
+    Trademe handles property prices in
+    the <code>PriceDisplay</code> variable. And there are a
+    bunch of different values that this can take on (deadlne
+    sale, auction, enquiries over, asking price, etc). Only
+    'asking price' and 'enquiries over' have an associated
+    numeric value. To reflect this I've tried to split
+    the <code>PriceDisplay</code> variable into two parts: the
+    integer component wherever one appears; and a categorical
+    variable capturing the non-numeric component (whether it is
+    a deadline sale, auction, asking price, etc).
+  </p>
+  
+  <pre>
+    <code>
+## Price variables
+df$price_integer &lt;- df$PriceDisplay %&gt;% str_extract_all('\\d') %&gt;%
+  lapply(., function(x) { paste(x, collapse = '') }) %&gt;% unlist %&gt;% as.integer()
+
+df$price_category &lt;- df$PriceDisplay %&gt;% str_extract_all('[^\\d:,$]') %&gt;%
+  lapply(., function(x) { paste(x, collapse = '') }) %&gt;% unlist %&gt;% str_remove(' $') %>% as.factor
+    </code>
+  </pre>
+
+  <h6 class="docs-header">Data visualisation</h6>
+  <p>
+    It seems almost redundant to point out that property is a
+    thing that happens spatially. So with respect to property
+    the first thing I usually like to do is to be able to
+    visualise all the data spatially. We can use
+    the <code>sf</code> package to turn our dataframe into a
+    simple features object and them use the <code>tmap</code>
+    package to plot it.
+  </p>
+  
+  <pre>
+    <code>
+library(sf)
+library(tmap)
+
+df$lon &lt;- df$GeographicLocation$Longitude
+df$lat &lt;- df$GeographicLocation$Latitude
+
+df_sf &lt;- st_as_sf(x = df, coords = c('lon', 'lat'), crs = 4326)
+
+## Visualise
+tmap_mode('view')
+tm_shape(df_sf %&gt;% select(geometry) + tm_dots()
+    </code>
+  </pre>
+  
+  <img class="u-max-full-width" src="assets/images/trademe_api_spatial_plot.png">
+
+  <p>
+    Amusingly one of the observations looks like it's in
+    Australia. A bit of manual checking confirmed that it was a
+    genuine error and the listing in question was supposed to be
+    in Hamilton somewhere.
+  </p>
+
+
+  <h6 class="docs-header">Modelling</h6>
+  <p>
+    For those that read <a href="https://www.blakeporterneuro.com/learning-python-project-2-how-to-find-the-best-price-on-trademe">Blake Porters blog post</a> that I mentioned
+    earlier (and you should). I would just gently observe that I
+    don't think this data is particularly good for model
+    building. I would certainly be taking any inferences drawn from models
+    built using this data with a real grain of salt. That said
+    there was nothing wrong with the modelling approach in
+    general. It's just the data seems pretty sketch and that combined
+    with Blake's gung ho approach to missingness and treatment
+    of all integer price values as equivalent (regardless of
+    whether they are 'asking price' or 'enquiries over') does
+    not for solid inferences make.
+  </p>
+
+  <p>
+    Most importantly though, if you throw out all the listings
+    that don't have a numeric value attached to them how are you
+    going to get a good deal on the houses being sold by tender,
+    deadline, or auction?
+  </p>
+
+  <!-- <p> -->
+  <!--   Having said all that though it's time to ignore all my own -->
+  <!--   advice and have a crack anyway. -->
+  <!-- </p> -->
+  
+</div>
+      
+      

@@ -1,0 +1,98 @@
+<div class="docs-section">
+  <h4 class="">NZ Government open data - exploring data.govt.nz</h4>
+  <p>
+    Ah democracy. Transparency. This is a wonderful resource.
+  </p>
+  <h6 class="docs-header">Title</h6>
+
+  <p>
+    We can get just a raw list of all the datasets names with
+    <code>package_list</code>.
+  </p>
+
+  <pre>
+    <code>
+library(httr)
+library(jsonlite)
+      
+result &lt;- GET('https://catalogue.data.govt.nz/api/3/action/package_list')
+dat &lt;- fromJSON(content(result, as='text'))
+dat$result
+    </code>
+  </pre>
+
+  
+  <p>
+    <a href="https://www.data.govt.nz/catalogue-guide/using-data-govt-nz-apis/accessing-dataset-metadata-via-api/">The
+    data.govt catalogue guide</a> points us to
+    the <a href="https://docs.ckan.org/en/latest/api/index.html">CKAN
+      docs</a> Where we can see that the maximum number of rows is
+    1000. I'm kind of surprised <code>package_search</code> takes an
+    open query. I hope that some government drone doesn't change this
+    but let's be real, people would find a way. I guess that's the
+    nice thing about transparency. It's not something you get to do
+    halfway. Which is why OIA's are such a joke. Sometimes it feels
+    like they're the mechanism by which the government is the writer
+    of it's own report cards. I digress.
+  </p>
+
+  <table class="u-full-width">
+    <thead>
+    </thead>
+    <tbody>
+      <tr>
+	<td><b>rows</b></td>
+	<td><i>int</i></td>
+	<td>The maximum number of matching rows (datasets)
+	  to return. (optional, default: 10, upper limit: 1000 unless set in
+	  site's configuration ckan.search.rows_max)</td>
+      </tr>
+      <tr>
+	<td><b>start</b></td>
+	<td><i>int</i></td>
+	<td>The offset in the complete result for where the set of
+	returned datasets should begin.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>
+    I guess it wouldn't be that hard to loop over this and get
+    complete metadata for every available dataset. I cribbed this loop
+    from the loop I wrote to do the same operation for the paginated
+    Trademe API results. It's a little bit hacky but I guess it works.
+  </p>
+
+  <pre>
+    <code>
+## API request loop
+rows &lt;- 1000
+stop &lt;- 0
+i &lt;- 1
+start &lt;- i
+dat &lt;- list()
+while(stop &lt; 1) {
+  url_page &lt;- paste0(url,'?rows=',rows,'&start=',start)
+  tmp &lt;- GET(url_page)
+  dat[[i]] &lt;- tmp
+  stop &lt;- if(fromJSON(content(tmp, as='text'))$result$count &lt;=
+  start + rows){1}else{0}
+  start &lt;- start+rows
+  i &lt;- i+1
+}
+rm(i, stop, start, rows, url_page)
+
+## melt paginated data together
+df &lt;- bind_rows(lapply(dat, function(x) {
+  fromJSON(content(x, as='text'))$result$results %&gt;%
+  as.data.frame() }
+))
+    </code>
+  </pre>
+
+  <p>
+
+  </p>
+  
+  
+</div>

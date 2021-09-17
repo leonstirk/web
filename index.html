@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Leon Stirk-Wang</title>
+    <meta name="description" content="Website of Leon Stirk-Wang">
+    <meta name="author" content="Leon Stirk-Wang">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600"
+	  rel="stylesheet" type="text/css">    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/assets/skeleton/css/normalize.css">
+    <link rel="stylesheet" href="/assets/skeleton/css/skeleton.css">
+    <link rel="stylesheet" href="/assets/custom.css">
+    <!-- Scripts -->
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="/assets/js/site.js"></script>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/images/favicon.png">
+    <!-- Load html includes -->
+    <script>
+      $(function () {
+	  var includes = $('[data-include]')
+	  $.each(includes, function () {
+	      var file = 'views/' + $(this).data('include') + '.html'
+	      $(this).load(file)
+	  })
+      })
+    </script>
+  </head>
+  <body>
+    <div id="top" class="container">
+      <section class="header">
+	<h2 class="title">Hi there. I'm Leon</h2>
+	<div class="value-props row">
+	  <div class="four columns value-prop">
+	    <!-- <img class="value-img" src="images/hat.svg"> -->
+	    I'm doing a PhD in economics at Otago.
+	  </div>
+	  <div class="four columns value-prop">
+	    <!-- <img class="value-img" src="images/house.svg"> -->
+	    I work mostly in housing and urban economics, and the
+	    economics of risk and insurance.
+	  </div>
+	  <div class="four columns value-prop">
+	    <!-- <img class="value-img" src="images/bot.svg"> -->
+	    I'm pretty good at computational causal modelling and
+	    machine learning methods.
+	  </div>
+	</div>
+      </section>
+
+      <div class="navbar-spacer"></div>
+      <nav class="navbar">
+	<div class="container">
+	  <ul class="navbar-list">
+	    <li class="navbar-item"><a class="navbar-link" href="#top">Intro</a></li>
+
+	    <li class="navbar-item">
+	      <a class="navbar-link" href="#"
+	      data-popover="#packageNavPopover">R Packages</a>
+	      <div id="packageNavPopover" class="popover">
+		<ul class="popover-list">
+		  <li class="popover-item">
+		    <a class="popover-link" href="https://github.com/leonstirk/gespag">gespag -
+		      Genetic Spatial Aggregation</a>
+		  </li>
+		  <li class="popover-item">
+		    <a class="popover-link" href="https://github.com/leonstirk/opdorg">opdorg -
+		      Open Data Organiser</a>
+		  </li>		    
+		  <li class="popover-item">
+		    <a class="popover-link" href="https://github.com/leonstirk/econFS">econFS
+		      - Frequency-Severity tools for economists</a>
+		  </li>
+		</ul>
+	      </div>
+	    </li>
+	    
+	    <li class="navbar-item">
+	      <a class="navbar-link" href="#", data-popover="#papersNavPopover">Papers</a>
+	      <div id="papersNavPopover"
+		   class="popover">
+		<ul class="popover-list">
+		  <li class="popover-item">
+		    <a class="popover-link"
+		       href="">Something</a>
+		  </li>
+		</ul>
+	      </div>
+	    </li>
+	    <li class="navbar-item">
+	      <a class="navbar-link" href="#" data-popover="#moreNavPopover">More</a>
+	      <div id="moreNavPopover"
+		   class="popover">
+		<ul class="popover-list">
+		  <li class="popover-item">
+		    <a class="popover-link"
+		       href="https://github.com/leonstirk">On
+		      Github</a>
+		  </li>
+		</ul>
+	      </div>
+	    </li>
+	  </ul>
+	</div>
+      </nav>
+
+      <div data-include="mortgage_rate_scraping"></div>
+      
+      <div data-include="moe_school_zones"></div>
+      
+      <!-- <div data-include="open_data"></div> -->
+      
+      <div data-include="trademe_api"></div>
+
+      <div data-include="govt_housing_package_commentary"></div>
+    </div>
+  </body>
+</html>

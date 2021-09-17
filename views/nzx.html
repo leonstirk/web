@@ -1,0 +1,68 @@
+<div class="docs-section">
+  <h4 class="">Let's scrape the NZX</h4>
+  <p>
+    ... so that we can make informed decisions about potential
+    investments and keep a track of our portfolio.
+  </p>
+  <p>
+    Also, it really annoys me that a whole arm of the NZX is dedicated
+    to selling access to market data. Like the whole
+    ecosystem of financial services in general wraps the activity of investment
+    in layers of fees and gatekeeping organisations whether it's
+    access to data or expertise or whatever. Like I do get that some
+    financial advice does add a little bit of value but really you get
+    99% of the way there with:
+    <ol>
+      <li>Don't invest anything you're not prepared to lose.</li>
+      <li>Diversification lowers non-systemic risk</li>
+    </ol>
+    I suspect most of the rest of the industry is basically a bunch of
+    rent-seeking.
+  </p>
+  <p>
+    So I would like to have the ability to analyse all the publically
+    available information in a way that I have complete control over.
+  </p>
+  <p>
+    We should try keep our scraping respectful though because they
+    were DDoSed a while ago. Part of their response to that attack has
+    been just to block all requests that look like they originate
+    outside of NZ. You can see what I mean by connecting to a non-NZ
+    VPN server and pulling up their website.
+  </p>
+  <h6 class="docs-header">Straight into code</h6>
+  <p>
+    Fortunately they have made it damn easy to get a snapshot of the
+    main boards (the NZSX and the NZDX). The data is delayed by 20-30
+    mins and you only ever get a cross section. They stopped
+    publishing the series.
+    <pre>
+      <code>
+library(tidyverse)
+library(rvest)
+library(snakecase)
+
+## NZX Main Board URL
+url &lt;- 'https://www.nzx.com/markets/NZSX'
+
+html &lt;- rvest::read_html(url)
+tbl &lt;- html %&gt;%  html_table() %&gt;% .[[1]]
+
+## Tidy up col names
+names(tbl) &lt;- to_any_case(names(tbl), 'snake')
+
+## Strip out all the character formatting for numeric variables
+tbl$change &lt;- tbl$change %&gt;% str_remove_all('(\\s\\/.*)')
+n &lt;- c('price', 'change', 'volume', 'value', 'capitalisation',
+     'percentage_change', 'trade_count', 'market_capitalisation')
+tbl[n] &lt;- lapply(tbl[n], function(x) {
+  x %&gt;% str_remove_all('[\\%\\$,]') %&gt;% as.numeric() })
+
+##Print resulting table
+tbl	     
+      </code>
+    </pre>
+    
+
+  <p></p>
+</div>

@@ -1,0 +1,323 @@
+<div class="docs-section">
+  <h4 class="">Scraping and visualising NZ retail mortgage rates</h4>
+  <p>
+    My mortgage is coming up to roll-over time. So I wanted to get
+    a snapshot of what the state of the retail mortgage rate market
+    was like. I mean I work in the area anyway so I try to keep an eye
+    on what is going on with rates but what I really felt
+    like compiling was the comprehensive figures across the market today.
+  </p>
+  <p>
+    Fortunately, <a href="https://mortgagerates.co.nz/mortgage-rates">this
+    site</a> seems to do a pretty good job of keeping track of the
+    advertised rates across retail lenders. What I'd like to do is to
+    make the table provided a little more useful by importing the
+    whole thing into R so we can do some analysis and visualisation etc.
+  </p>
+  <h6 class="docs-header">Scrape the data</h6>
+  <p>
+    I'm going to use the tidyverse <code>rvest</code> package to do my
+    scraping. I'm also going to use a package
+    called <code>snakecase</code> to do some low effort case
+    manipulation. Now I'm thinking about it I'll also drop in the code
+    to reproduce the tables using <code>stargazer</code>. Stargazer is
+    normally useful to me as it outputs latex but it is equally useful
+    for outputting html and that's what I'm using for this site. I
+    just write everything here directly in html files. No blogging
+    UI on the backend or anyting like that.
+    
+    <pre>
+      <code>
+library(tidyverse)	
+library(rvest)
+library(stringr)
+library(snakecase)
+library(stargazer)
+
+      </code>
+    </pre>
+
+    First I need to get the html from the page.
+    
+    <pre>
+      <code>
+## Get html at mortgagerates.co.nz
+url &lt;- 'https://mortgagerates.co.nz/mortgage-rates'
+html &lt;- rvest::read_html(url)
+      </code>
+    </pre>
+
+    Then I need to use the <code>rvest::html_elements</code> function to pare
+    down to just the html elements I'm interested in. In this case
+    they are any <code>div</code> elements with
+    the <code>table-row</code> class.
+    
+    <pre>
+      <code>
+## Find elements, extract text and split on the '/n' linebreaks
+tmp &lt;- html %&gt;% html_elements(".table-row") %&gt;% html_text2() %&gt;% str_split("\\n")
+
+## I'm also going to get the divs with '.lender-cell' seperately
+## because I only want the text in the '.product-name' spans. 
+tmp_n &lt;- html %&gt;% html_elements(".table-row") %&gt;%
+            html_elements(".lender-cell") %&gt;%
+            html_element('.product-name') %&gt;%
+            html_text2()
+
+## Hack together a 'pretty' data frame by:
+## Binding the rows together
+tbl &lt;- as.data.frame(do.call(rbind, tmp[-1]))
+
+## Pushing the column names from the first list element in tmp
+names(tbl) &lt;- to_any_case(tmp[[1]], 'snake')
+		 
+## Replacing the values in the lender column with the tidier values in
+## the tmp_n vector
+tbl$lender &lt;- tmp_n[-1]
+
+## Tidy up a bit
+rm(tmp, tmp_n)
+
+## And then print the first 10 rows of the data frame
+tbl %&gt;% head(10) %&gt;% stargazer::stargazer(type = 'text',
+summary = F, rownames = F)
+      </code>
+    </pre>
+
+    That should give us something that looks like this. These are only
+    the first 10 rows but it gives us the flavour of the data structure.
+  </p>
+
+
+  <table class="u-full-width">
+    <thead>
+      <tr>
+	<th>lender</th>
+	<th>revolving</th>
+	<th>floating</th>
+	<th>6_months</th>
+	<th>1_year</th>
+	<th>18_months</th>
+	<th>2_years</th>
+	<th>3_years</th>
+	<th>4_years</th>
+	<th>5_years</th>
+      </tr>
+    </thead>
+    <tbody>
+    <tr><td>ANZ</td><td>4.55%</td><td>4.44%</td><td>3.99%</td><td>3.15%</td><td>3.39%</td><td>3.55%</td><td>3.85%</td><td>4.29%</td><td>4.59%</td></tr>
+  <tr><td>ANZ
+      Special</td><td>-</td><td>-</td><td>3.39%</td><td>2.55%</td><td>2.79%</td><td>2.95%</td><td>3.25%</td><td>-</td><td>-</td></tr>
+  <tr><td>ASB
+      Special</td><td>4.55%</td><td>4.45%</td><td>3.29%</td><td>2.55%</td><td>2.79%</td><td>2.95%</td><td>3.55%</td><td>3.99%</td><td>4.29%</td></tr>
+  <tr><td>BNZ Investor
+      Special</td><td>-</td><td>-</td><td>3.29%</td><td>2.55%</td><td>2.79%</td><td>2.95%</td><td>3.25%</td><td>3.69%</td><td>3.99%</td></tr>
+  <tr><td>BNZ Investor
+      Standard</td><td>-</td><td>4.55%</td><td>3.89%</td><td>3.15%</td><td>3.39%</td><td>3.55%</td><td>3.85%</td><td>4.29%</td><td>4.59%</td></tr>
+  <tr><td>BNZ Owner Occupied
+      Special</td><td>-</td><td>-</td><td>3.29%</td><td>2.55%</td><td>2.79%</td><td>2.95%</td><td>3.25%</td><td>3.69%</td><td>3.99%</td></tr>
+  <tr><td>BNZ Owner Occupied
+      Standard</td><td>-</td><td>4.55%</td><td>3.89%</td><td>3.15%</td><td>3.39%</td><td>3.55%</td><td>3.85%</td><td>4.29%</td><td>4.59%</td></tr>
+  <tr><td>China Construction
+      Bank</td><td>-</td><td>5.00%</td><td>4.50%</td><td>4.50%</td><td>4.50%</td><td>4.40%</td><td>4.30%</td><td>4.95%</td><td>4.95%</td></tr>
+  <tr><td>China Construction Bank
+      Special</td><td>-</td><td>-</td><td>2.65%</td><td>2.65%</td><td>2.65%</td><td>2.85%</td><td>3.25%</td><td>3.55%</td><td>3.99%</td></tr>
+  <tr><td>Credit Union
+      Auckland</td><td>-</td><td>5.95%</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+    </tbody>
+  </table>
+    
+  <h6 class="docs-header">Reshape data a little bit</h6>
+
+  <p>
+    The data frame above is fine. It's a pretty faithful reproduction
+    of what we can read of the mortgagerates.co.nz site. Before
+    getting any further with any analysis other than just looking at
+    the table it's worth just reshaping the data a little bit.
+  </p>
+  <p>
+    It's convenient for me to change it into a slightly 'longer'
+    format and do some additional cleaning. Making the number columns
+    numeric and stripping out the % symbols etc.
+    
+    <pre>
+      <code>
+## Change to long format based on unique term/rate pairs
+long &lt;- pivot_longer(tbl, tail(names(tbl),-1), names_to = 'term', values_to = 'rate')
+
+## strip out the trailing % symbols
+long$rate &lt;- long$rate %&gt;% str_replace_all('[-%]', '') %&gt;%
+as.numeric()
+
+## New term_n factor variable
+long$term_n &lt;- long$term %&gt;% as.factor()
+
+## Recode factor levels to numeric equivalents and change back to numeric
+long$term_n &lt;- long$term_n %&gt;% fct_recode('NA' = 'revolving',
+                                              '0' = 'floating',
+                                              '0.5' = '6_months',
+                                              '1' = '1_year',
+                                              '1.5' = '18_months',
+                                              '2' = '2_years',
+                                              '3' = '3_years',
+                                              '4' = '4_years',
+                                              '5' = '5_years') %&gt;%
+as.character() %&gt;% as.numeric()
+
+## Print the first 10 rows of the long format data frame
+long %&gt;% head(10) %&gt;% stargazer::stargazer(type = 'text', summary = F,
+rownames = F)
+      </code>
+    </pre>
+
+    The long format data frame should look something like this:
+  </p>
+
+  <table class="u-full-width">
+    <thead>
+      <tr>
+	<th>lender</th>
+	<th>term</th>
+	<th>rate</th>
+	<th>term_n</th>
+      </tr>
+    </thead>
+    
+    <tbody>
+      <tr><td>ANZ</td><td>revolving</td><td>4.55</td><td>NA</td></tr>
+      <tr><td>ANZ</td><td>floating</td><td>4.44</td><td>0</td></tr>
+      <tr><td>ANZ</td><td>6_months</td><td>3.99</td><td>0.5</td></tr>
+      <tr><td>ANZ</td><td>1_year</td><td>3.15</td><td>1</td></tr>
+      <tr><td>ANZ</td><td>18_months</td><td>3.39</td><td>1.5</td></tr>
+      <tr><td>ANZ</td><td>2_years</td><td>3.55</td><td>2</td></tr>
+      <tr><td>ANZ</td><td>3_years</td><td>3.85</td><td>3</td></tr>
+      <tr><td>ANZ</td><td>4_years</td><td>4.29</td><td>4</td></tr>
+      <tr><td>ANZ</td><td>5_years</td><td>4.59</td><td>5</td></tr>
+      <tr><td>ANZ Special</td><td>revolving</td><td>NA</td><td>NA</td></tr>      
+    </tbody>
+  </table>
+
+  <h6 class="docs-header">Finally, a bit of analysis</h6>
+  
+  <p>
+    I wanted to have a look at who was advertising the best deals for
+    each mortgage term length (including the revolving and floating
+    rates).
+    <pre>
+      <code>
+## Summarise by term length:
+## Mean market rate for each term length,
+## Lowest rate for each term length,
+## And the lender providing the lowest rate
+deals &lt;- long %&gt;% group_by(term) %&gt;%
+summarise('avg' = mean(rate, na.rm = T),
+          'min' = min(rate, na.rm = T),
+          'min_bank' = lender[which(rate == min(rate, na.rm = T))])
+
+## Mess around rounding the numbers nicely
+deals &lt;- bind_cols(lapply(deals, function(x) {
+	   if(is.numeric(x)) { format(x, digits = 3) }
+	   else if(is.factor(x)) { as.character(x) }
+	   else { x }
+	 }))
+	 
+## Print the resulting table
+deals %&gt;% stargazer::stargazer(type = 'text', summary = F, rownames = F)
+
+      </code>
+    </pre>
+  </p>
+
+  <table class="u-full-width">
+    <thead>
+      <tr>
+	<th>term</th>
+	<th>avg</th>
+	<th>min</th>
+	<th>min_bank</th>
+      </tr>
+    </thead>
+
+    <tbody>
+    <tr><td>1_year</td><td>2.95</td><td>2.15</td><td>Heartland Bank</td></tr>
+    <tr><td>18_months</td><td>3.12</td><td>2.59</td><td>SBS Special</td></tr>
+    <tr><td>2_years</td><td>3.24</td><td>2.45</td><td>Heartland Bank</td></tr>
+    <tr><td>3_years</td><td>3.39</td><td>1.37</td><td>Housing NZ Corp</td></tr>
+    <tr><td>4_years</td><td>3.92</td><td>3.39</td><td>HSBC Premier</td></tr>
+    <tr><td>4_years</td><td>3.92</td><td>3.39</td><td>SBS Special</td></tr>
+    <tr><td>5_years</td><td>4.20</td><td>3.54</td><td>Resimac</td></tr>
+    <tr><td>6_months</td><td>3.43</td><td>2.49</td><td>The Co-operative Bank Owner Occupied</td></tr>
+    <tr><td>floating</td><td>4.62</td><td>2.25</td><td>Heartland Bank</td></tr>
+    <tr><td>revolving</td><td>4.45</td><td>3.80</td><td>Kiwibank</td></tr>
+    <tr><td>revolving</td><td>4.45</td><td>3.80</td><td>Kiwibank Special</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    Um... yes. There's probably a bit to unpack here. Maybe I'll get
+    around to it sometime. Maybe not...
+  </p>
+  
+  <h6 class="docs-header">Visualising term structures</h6>
+
+  <p>
+    I also want to figure out how my current mortgage providers rates
+    look compared to the wider market. Let's be real. It's going to
+    just be less hassle to just roll it with the same provider. My
+    current lender is Co-op and I'm living in the house so I'm mostly
+    just interested in what their owner occupied rates look like
+    across all term lengths compared with the broader market.
+  </p>
+  <p>
+    Lets have a look at what <code>ggplot</code> has to say.
+    
+    <pre>
+      <code>
+## Plot rates by term grouped by lender/product
+## Loess regression (in blue) plots the term condtioned market mean rate
+## Co-op owner occupied rates in red
+ggplot(data = long %>% filter(term_n >= 0) %>% na.omit(), aes(term_n, rate)) +
+  geom_line(aes(group = lender), col = 'light grey') +
+  geom_smooth() +
+  geom_line(data = long %>% filter(lender == 'The Co-operative Bank
+    Owner Occupied' & term_n >= 0), aes(term_n, rate), size = 1, col = 'red') +
+  theme(legend.position="none")
+      </code>
+    </pre>
+  </p>
+    
+  <img class="u-max-full-width" src="assets/images/mortgage_rate_scraping.png">
+
+  <p>
+    So Co-op look ok, certainly better than the market average but by no
+    means the best advertised rate. And maybe the Loess line is a little
+    misleading here because there are some lenders like China
+    Construction pulling the rates up by charging in the ballpark of
+    4.5% on everything from 6 months to 3 years. I should really weight
+    the loess by market share.
+  </p>
+  <p>
+    Heartland bank is the crazy line
+    down the bottom. I don't know quite what's going on there. It looks
+    like it might be a really aggressive play for customers. Maybe there
+    are some really restrictive terms attached or something.
+  </p>
+  <p>
+    It is probably just woth noting that in my <code>deals</code>
+    table it said that Co-op's 6 month rate was the lowest of all the
+    lenders but the graph makes it look like Heartland has a lower 6
+    month rate. This is because Heartland don't offer a 6 month rate
+    and I've got <code>ggplot</code> to interpolate the lines across
+    the missing values because I didn't want broken lines.
+  </p>
+  <p>
+    TLDR; the table is right and the graph can be misleading for the
+    sake of looking a little more tidy. As long as we know what's
+    going on though we should be fine.
+    </p>
+  <p>
+    Anyway, that's a starting point. You've got everything you need to
+    mess around with the numbers more if you want.
+  <p>
+</div>
+

@@ -1,0 +1,192 @@
+<div class="docs-section">
+  <h4 class="">The Ministry of Education really needs to get its shit together</h4>
+  <p>
+    ...in the extremely niche area of open spatial data.
+  </p>
+  <p>
+    I was interested in getting my hands on the school zone boundary
+    data across all New Zealand. I thought this would be pretty
+    straightforward given the quality of
+    the <a href="https://datafinder.stats.govt.nz/">StatsNZ</a> and
+    <a href="https://data.linz.govt.nz/">LINZ</a>
+    platforms are with respect to spatial data sharing.
+  <p>
+  <p>
+    A cursory first search for "nz school zone GIS" turned up
+    a <a href="https://koordinates.com/layer/743-nz-school-zones-sept-2010/">GIS
+      file</a> that was 10 years out of date and was released only as a
+    response to an OIA request.
+  <p>
+  <p>
+    It also turned
+    up <a href="https://data.govt.nz/datasetrequest/show/10">a
+      request</a> to the government information services for, as I read
+    it, exactly what I was after.
+  <p>
+  <p>
+    The request itself was also about 10 years old (7 April 2011) and
+    it made some compelling points:
+  </p>
+  <p>
+    <i>
+      Opening this data would solve the problem of...
+
+      <ul>
+	<li>Being able to use the data to mash up with other datasets to
+	  create compelling data visualisations.</li>
+	<li>Allowing more people to view the zones and report issues with
+	  the data (The zone file has lots of small errors in it)</li>
+	<li>Reducing the reliance on schoolzones.co.nz which is often
+	  offline and is a very old and unfriendly website to use.</li>
+      </ul>
+
+      Third parties could build better tools on top of the existing
+      data exposing it to more users. This is especially relevant to
+      property websites.
+
+      The dataset is currently tightly controlled by a third party
+      commercial provider and we would like to see this managed by the
+      MOE more closely. The dataset is also updated every week by MOE
+      but only released every three months. Also when this data has
+      been OIA requested the data is out of date immediately
+      and this is not a good thing as people may rely on old data to
+      make decisions.
+
+      Having this data as a free, open dataset would allow sites to
+      keep up-to-date versions easily accessible by their users.
+    </i>
+  </p>
+  <p>
+    Government response:
+  </p>
+  <p>
+    <i>
+      <b>Status:</b>
+      Investigating options
+    </i>
+  </p>
+  
+  <p>
+    <i>
+      <b>Comments:</b>
+      I have recently assumed responsibility for this area in the
+      Ministry of Education.  Due to staff departures, I don't have all
+      the information I need to be able to respond to this query at this
+      time.  I should be able to provide a response by 20 May.
+    </i>
+  </p>
+  
+  <p>
+    And then...
+  </p>
+  <p>
+    Nothing.
+  </p>
+  <p>
+    Nothing at all until someone (not related to the govt?) pipes up in 2019 with a link to
+    <a href="https://www.educationcounts.govt.nz/data-services/school-enrolment-zones">the
+      educationcounts.govt.nz site</a> where you can finally find the
+    data in a downloadable file in, wait, what's this? A MAPINFO
+    format? Who uses the MAPINFO format?
+  <p>
+  <p>
+    Obviously something has been done since the above data request was
+    made. The enrolment zone boundary file <i>is</i> up-to-date. But
+    the gulf between the expectation set up by the initial request and
+    this obscure little download buried at the bottom of this site is
+    wide.
+  </p>
+  <p>
+    Also, I don't quite know what the deal is but this comment is
+    made about the downloadable data file (emphasis mine):
+  </p>
+  <p>
+    <i>
+      Enrolment Scheme Home Zones are available to download (below) in
+      MAPINFO format in NZMG coordinate system.  The polygons
+      representing the home zones <b>do not have a high degree of spatial
+	resolution nor vertical alignment integrity</b>.  This file <b>should
+	not be used</b> to perform spatial queries with other datasets such
+      as the DCDB.
+    </i>
+  </p>
+  <p>
+    Like, is there a master boundary file that does have good spatial
+    resolution and vertical integrity? Why not make that available for
+    download? It's not like this is sensitive information. School
+    zones are public information by definition. So have they made this
+    low integrity version especially for the public release? If so
+    why? And if not, is a low integrity set of boundary geometries
+    just what MoE uses as its ground truth? If that's the case then it
+    doesn't matter that the file is low integrity because it's the MoE
+    that decides which properties are in which school zones. So this set of
+    geometries, low integrity or not, is the ground truth. Does anyone
+    know where the boundaries really are? And if there is no definitive
+    reference then zone boundaries are basically
+    meaningless. Go to school wherever you want. Anarchy.
+  </p>
+  <p>
+    The whole situation is just so nonsensical.
+  <p>
+    But you know what? It's fine for now. I'll just clean it
+    up a little and see where it leads.
+  </p>
+  <h6 class="docs-header">Some code</h6>
+  <pre>
+    <code>
+      library(sp)
+      library(sf)
+      library(rgdal)
+      library(rvest)
+
+      ## Go to educationcounts website
+      url &lt;- 'https://www.educationcounts.govt.nz/data-services/school-enrolment-zones'
+      page &lt;- read_html(url)
+      
+      ## Have a look for the link to the master enrolment file
+      links &lt;- page %&gt;% html_elements('a')
+      file_url &lt;- links[str_which(links %&gt;%
+      html_attr('title'), 'School Enrolment Scheme Master')] %&gt;%
+      html_attr('href')
+
+      ## Download the file, unzip it, and read it in
+      temp &lt;- tempfile()
+      temp2 &lt;- tempfile()
+      download.file(file_url,temp)
+      unzip(zipfile = temp, exdir = temp2)
+      dat &lt;- readOGR(file.path(temp2, list.files(temp2)[list.files(temp2) %&gt;% str_which('.TAB')]))
+      unlink(c(temp, temp2))
+
+      ## Transform it into something I can work with
+      dat &lt;- st_as_sf(spTransform(dat, sp::CRS("+init=epsg:4326")), crs = 4326)
+
+      ## There are a bunch of invalid geometries that have to be tidied up
+      dat &lt;- st_make_valid(dat)
+      dat_valid &lt;- dat[st_is_valid(dat),]
+
+      ## Tidying doesn't work on some of them
+      dat_invalid &lt;- dat[!st_is_valid(dat),]
+
+      ## Plot the valid polygons
+      tmap_mode('view')
+      tm_shape(dat_valid) + tm_polygons(col = 'INSTTYPE', alpha = 0.2)
+      
+      ## List the invalid and therefore unplotted polygons
+      dat_invalid %>% as.data.frame() %>% .[,'PolyName']
+    </code>
+  </pre>
+
+  <img class="value-img" src="assets/images/moe_school_zones.png">
+    
+  <p>
+    And there we go. Useable boundary data in a modern format that can
+    be used to generate compelling and informative visualisations that
+    might be useful to anyone that is interested. And as a bonus I've also
+    identified all the out-and-out invalid geometries that need to be
+    fixed. Unfortunately the INSTTYPE variable that I have used to
+    colour the polygons seems to have some inconsistencies in the
+    recorded values. It shouldn't matter though as I only plan on using the
+    shapefiles to identify "in zone" schools by property using
+    porperty location data using something like <code>st_contains()</code>.
+  </p>
+</div>
