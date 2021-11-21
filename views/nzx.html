@@ -8,7 +8,7 @@
     Also, it really annoys me that a whole arm of the NZX is dedicated
     to selling access to market data. Like the whole
     ecosystem of financial services in general wraps the activity of investment
-    in layers of fees and gatekeeping organisations whether it's
+    in layers of fees and bullshit gatekeeping institutions whether it's
     access to data or expertise or whatever. Like I do get that some
     financial advice does add a little bit of value but really you get
     99% of the way there with:
@@ -18,6 +18,14 @@
     </ol>
     I suspect most of the rest of the industry is basically a bunch of
     rent-seeking.
+  </p>
+  <p>
+    That is not in any way an endorsement of Robinhood or Sharesies or
+    any other Silicon Valley-esque snake-oil. Their business models
+    are basically the same as Candy Crush i.e. a total sham as far as
+    investing is concerned. If you want to use them for financial
+    'education'. Just be aware that the most valuable bit of education
+    you'll get is that you shouldn't use them for investing. 
   </p>
   <p>
     So I would like to have the ability to analyse all the publically
@@ -32,10 +40,11 @@
   </p>
   <h6 class="docs-header">Straight into code</h6>
   <p>
-    Fortunately they have made it damn easy to get a snapshot of the
+    Fortunately they have made it fairly easy to get a snapshot of the
     main boards (the NZSX and the NZDX). The data is delayed by 20-30
     mins and you only ever get a cross section. They stopped
-    publishing the series.
+    publishing the series data for some reason. Probably because they
+    want to sell it to people.
     <pre>
       <code>
 library(tidyverse)
@@ -62,7 +71,86 @@ tbl[n] &lt;- lapply(tbl[n], function(x) {
 tbl	     
       </code>
     </pre>
-    
+  </p>
 
-  <p></p>
+  <p>
+    We can look at the individual listings for slightly more detailed
+    information but that means hitting the page for each instrument
+    once to get the data and then stitching it together. Fortunately
+    that's only 180 odd pages and takes about a minute and a half.
+    <pre>
+      <code>
+
+## Individual listing scraping for MORE DATA
+## format: 'https://www.nzx.com/instruments/AMP'
+
+## Get a vector of all the ticker symbols to use in the urls
+tcks &lt;- board$code
+
+## initialise an empty list for the results
+insts &lt;- list()
+
+## Keep track of the total time the scraping loop takes by getting the
+start time.
+st &lt;- Sys.time()
+
+## Scraping loop 
+for(i in 1:length(tcks)) {
+  ## Form url string
+  page_url &lt;- paste0('https://www.nzx.com/instruments/',tcks[i])
+  ## Get html and extract table text
+  html &lt;- rvest::read_html(page_url)
+  tbl &lt;- html %&gt;% html_table()
+  ## Compress contents of tables into a single dataframe
+  tbl &lt;- do.call(rbind, tbl) %&gt;% as.data.frame()
+  tmp &lt;- tbl[,2]
+  ## Handle names
+  names(tmp) &lt;- tbl[,1]
+  tmp["code"] &lt;- tcks[i]
+  ## Add to instruments list
+  insts[[i]] &lt;- tmp
+}
+## Print elapsed time
+et &lt;- Sys.time()
+print(et - st)
+rm(et,st)
+
+      </code>
+    </pre>
+  </p>
+
+  <p>
+    <pre>
+      <code>
+
+inst_df &lt;- do.call(rbind, insts) %&gt;% as_tibble()
+names(inst_df) &lt;- to_any_case(names(inst_df), 'snake')
+names(inst_df)[which(names(inst_df) == 'type')] &lt;- 'type_b'
+drop_names &lt;- names(inst_df)[which(!names(inst_df) %in% c(names(board), 'capitalisation_000_s' ,'trades'))]
+merged_df &lt;- left_join(inst_df[,c('code', drop_names)], board, by = 'code')
+n &lt;- c('open', 'high', 'low', 'high_bid', 'low_offer', 'p_e', 'eps', 'nta', 'gross_div_yield', 'securities_issued')
+merged_df[n] &lt;- lapply(merged_df[n], function(x) { x %&gt;%
+str_remove_all('[\\%\\$,]') %&gt;% as.numeric() })
+merged_df &lt;- merged_df %&gt;%
+mutate_at('gross_div_yield', function(x) { x/100 })
+
+      </code>
+    </pre>
+  </p>
+
+  <p>
+    <pre>
+      <code>
+## Save
+now &lt; to_any_case(as.character(merged_df$access_timestamp[1]), 'snake')
+saveRDS(merged_df, paste0('datasets/nzsx_', now, '.rds'))
+
+## Add to a master file
+master_df &lt;- readRDS('datasets/nzsx_master.rds')
+saveRDS(master_df, paste0('datasets/nzsx_master_', now, '.rds'))
+master_df &lt;- bind_rows(master_df, merged_df)
+saveRDS(master_df, paste0('datasets/nzsx_master.rds'))
+      </code>
+    </pre>
+  </p>
 </div>

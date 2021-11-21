@@ -1,0 +1,555 @@
+<div id="HeRDS" class="docs-section">
+  <h4 class="">HeRDS: Hedonic Residual Delta Surface</h4>
+  <p>
+    I've had a this idea of interpolating continuous surfaces for
+    the analysis of spatially distributed values kicking around in my
+    head for a while. The idea came out of some early discussions
+    about my PhD research with my supervisor Paul and it was always kind of
+    on the periphery of the causal methods work I've been
+    doing. Recently we'd discussed applying some version of the
+    technique to a project being undertaken by one of Paul's masters
+    students. He is new to R and I thought this was a good opportunity
+    to get some of my thoughts organised with some R code examples as
+    a reference for him to follow along with. 
+  </p>
+
+  <p>
+    I work a lot with real-estate sales data so that's what I'll be
+    using as an example. In many cases, econometric analyses attempts
+    to estimate the "effect of a cause". For example, how much will
+    the value of my property increase if I add a deck? We would estimate
+    the effect on the price variable <em>caused</em> by the addition
+    of a deck. I won't really get into the finer details of
+    identification here, but suffice to say that that the formulation
+    of (probabalistically falsifiable) Fisherian hypotheses to
+    identify the size and significance of the effect is the basic
+    template for most (particularly micro) econometric research.
+  </p>
+  
+  <h5 class="docs-header">Setting up "reverse causal" questions</h5>    
+  <p>
+    Recently I read
+    a <a href="https://www.nber.org/system/files/working_papers/w19614/w19614.pdf">perspectives
+    paper</a> on this sort of research process. Without really being
+    very radical with respect to the research methods status quo
+    <a href="https://www.nber.org/system/files/working_papers/w19614/w19614.pdf">Gelman and Imbens</a>
+    do a little bit of semantic doodling to distinguish between the
+    aforementioned "effects of causes" analysis, and research that
+    places a greater emphasis on the search for "causes of effects".
+  </p>
+
+  <p>
+    From their abstract:
+    <blockquote cite="https://www.nber.org/system/files/working_papers/w19614/w19614.pdf">
+      The statistical and econometrics literature on causality is more
+      focused on "effects of causes" than on "causes of effects". That is,
+      in the standard approach it is natural to study the effect of a
+      treatment, but it is not in general possible to define the causes
+      of any particular outcome. This has led some researchers to dismiss
+      the search for causes as "cocktail party chatter" that is outside the
+      realm of science. We argue here that the search for causes can be
+      understood within traditional statistical frameworks as a part of
+      model checking and hypothesis generation. We argue that it can make
+      sense to ask questions about the causes of effects, but the answers to
+      these questions will be in terms of effects of causes.
+    </blockquote>
+    They define the two approaches as being either "forward" or
+    "reverse" causal questions.
+    <blockquote cite="https://www.nber.org/system/files/working_papers/w19614/w19614.pdf">
+      Following Gelman (2011), we distinguish two broad classes of
+      causal queries:
+      <ol>
+	<li>
+	  Forward causal questions, or the estimation of "effects of
+	  causes". What might happen if we do X? What is the effect of
+	  some manipulation, e.g., the effect of smoking on health,
+	  the effect of schooling on earnings, the effect of campaigns
+	  on election outcomes, and so forth?
+	</li>
+	<li>
+	  Reverse causal inference, or the search for "causes of
+	  effects". What causes Y? Why do more attractive people earn
+	  more money? Why does per capita income vary some much by
+	  country? do many poor people vote for Republicans and rich
+	  people vote for Democrats? Why did the economy collapse?
+	</li>
+      </ol>
+    </blockquote>
+
+    And they go on to contextualise these question quoting...
+    <blockquote cite="https://www.nber.org/system/files/working_papers/w19614/w19614.pdf">
+      ... Kaiser Fung, a statistician who works in the corporate world:
+      A lot of real world problems are of the reverse causality type,
+      and it's an embarrassment for us to ignore them... Most business problems are
+      reverse causal. Take for example P&amp;G who spend a huge amount
+      of money on marketing and advertising activities. The money is
+      spread out over many vehicles, such as television, radio,
+      newspaper, supermarket coupons, events, emails, display ads,
+      search engine, etc. The key performance metric is sales amount.
+
+      If sales amount suddenly drops, then the executives will want to
+      know what caused the drop. This is the classic reverse causality question. Of
+      course, lots of possible hypotheses could be generated... TV ad was not liked,
+      coupons weren't distributed on time, emails suffered a
+      deliverability problem, etc. By a process of elimination, one can
+      drill down to a small set of plausible causes. This is all complex work that gives approximate answers.
+      The same question can be posed as a forward causal problem. We now
+      start with a list of treatments. We will divide the country into regions,
+      and vary the so-called marketing mix, that is, the distribution of spend across
+      the many vehicles. This generates variations in the spend patterns by vehicle,
+      which allows us to estimate the effect of each of the constituent vehicles on the
+      overall sales performance.
+    </blockquote>
+  </p>
+  <p>
+    The upshot of all this semantic prognostication is that there is
+    some real value in simply observing the world around us and searching for
+    the causal structures that drive it (in a rigorous way of
+    course). I mean it's almost too naive to bear saying but that
+    seems like exactly what science is. 
+  </p>
+  <p>
+    The challenge in this particular context is how to go about making
+    those observations? How are we to isolate the kinds of
+    patterns in our observed data that are anomalous with our baseline
+    expectations. After all, it is those anomalous patterns that
+    prompt a search for an explanation. Much like the observation
+    that prompted Fleming's now legendary response of "that's funny"
+    when observing the inhibition of staphylococci colony growth by penicillin.
+  </p>
+
+  <h5 class="docs-header">Contextualising the problem with real-estate sales data</h5>    
+  <p>
+    The data that I will use are complete sales records of detached
+    single family dwellings in Christchurch, New Zealand from January
+    2008 through November 2018. Over that period of time Christchurch
+    suffered a devastating series of earthquakes. Given
+    the magnitude of the destruction, there is a strong a priori argument
+    that the spatial distribution of real-estate values was likely
+    permanently altered as a consequence. While the temporal dimension of
+    this event is hard to dispute, what is less clear are the specific
+    causes of changes to the intra-city locational values over not only the period of
+    destruction; but the period over which large portions of the city
+    were rebuilt.
+  </p>
+  <p>
+    If we are able to clearly identify the changes in the spatial distribution
+    of these locational values then we are better able to search for a
+    plausible set of specific causes for them. That is, we will be in
+    a position to ask "reverse causal" questions in a meaningful and
+    structured way. For example: in the course of rebuilding the
+    city, why did relative prices rise so much
+    in this neighbourhood and fall so much in another? Such a question might
+    be followed up with a "forward causal" inquiry investigating the
+    relationship between infrastructure development and the
+    neighbourhoods in question. If such an inquiry does not provide
+    sufficient explanatory power then the search for plausible causes
+    must continue. The observations that deviate from our
+    expectations will remain "anomalous" until a satisfactory causal
+    structure is identified.
+  </p>
+  <p>
+    In this way the observations triggering the "reverse causal"
+    questions, that is, the observations that trigger hypothesis
+    generation and against which hypotheses are checked and refined
+    are independent of subsequent "forward causal" hypothesis
+    testing.
+  <p>
+  <p>
+    The purpose of HeRDS is to generate the spatial map that allows us
+    to visualise these spatial "anomalies". Within the above context he process is basically this:
+    <ol>
+      <li>Take the data and split it into a before earthquake group
+	and an after earthquake group</li>
+      <li>For each group, control for property level confounders (we
+      basically want to be able to see the per square metre value of a
+	standardised piece of land, the "pure land" value) i.e. run a hedonic regression on
+      sale prices and calculate the residuals.</li>
+      <li>For each group, use the residuals (unmodelled [and spatially autocorrelated]
+      variation in prices) to generate a residual value surface (via
+	interpolation)</li>
+      <li>Generate a new surface defined as the difference in the interpolated residual value
+	surfaces of the before earthquake and after earthquake groups</li>
+      <li>The new surface is the "delta" or "change" surface that
+      captures the difference in the spatial distribution of "pure
+	land" values between the two time periods.</li>
+    </ol>
+    The HeRDS acronym recalls the above process. Specifically, <em>hedonically</em>
+    generated <em>residuals</em> are interpolated, and the surfaces
+    differenced to form a <em>delta</em> or change <em>suface</em>.
+  </p>
+  
+  <h5 class="docs-header">Developing HeRDS with code examples</h5>    
+  <p>
+    There are a number of ways to approach this sort of spatial
+    analysis. For various practical reasons I stick to K nearest
+    neighbours/inverse distance weighting methods for interpolation
+    and implement a very basic raster based data support metric.
+
+    That said, the area of spatial stats is pretty broad and pretty
+    deep. The interested reader might start to gain a better understanding of
+    this code as well as spatial analyses generally by having a read
+    of some of the below resources.
+
+    As far as interpolation, I took inspiration from three very good blog
+    post tutorials. I'd recommend checking them out for some more
+    depth on various methods. You can find the
+    posts <a href="https://swilke-geoscience.net/post/spatial_interpolation/">here</a>, <a href="https://rspatial.org/terra/analysis/4-interpolation.html">here</a>,
+    and <a href="https://timogrossenbacher.ch/2018/03/categorical-spatial-interpolation-with-r/">here</a>.
+    
+    Given that this code uses a number of different data formats as
+    I move to and from raster and vector
+    layers, <a href="https://geocompr.github.io/post/2021/spatial-classes-conversion/">this
+    post</a> on spatial data format conversions is potentially useful
+    to anyone less familiar with all the ins and outs of spatial data
+    handling in R.
+
+    Finally, <a href="https://rspatial.org/index.html">This site</a>
+    is a fairly comprehensive set of vignettes for data handling and
+    analysis with the R <code>terra</code> package (and
+    the <code>raster</code> package, but I try to stick
+    with <code>terra</code> as it is the more recent implementation of
+    the <code>raster</code> package).
+
+    Of course the semi-official current spatial data format is the
+    "simple features" format of the <code>sf</code> package and I do
+    also make some use of that package and so some familiarity with
+    that package might also be useful here.
+  </p>
+  
+  <p>
+    Ok let's work through the process with some code examples. The
+    spatial modelling functions are going to determine basically all
+    of the data handling operations (and to some extent the visualisation) so we should have a good idea of:
+    <ol>
+      <li>What interpolation methods we want to use</li>
+      <li>What packages those methods are going to come from</li>
+      <li>How the data arguments will need to be formatted for those
+	function calls</li>
+    </ol>
+  </p>
+  <h6 class="docs-header">What interpolation methods do we want to use?</h6>
+  <p>
+    There are a number of interpolation methods that can be easily
+    implemented in R:
+    <ul>
+      <li>K Nearest Neighbours</li>
+      <li>Inverse Distance Weighting</li>
+      <li>Kriging</li>
+      <li>Thin Plate Spline</li>
+      <li>Triangular Irregular Surface</li>
+      <li>Generalized Additive Model</li>
+    </ul>
+    This analysis sticks with KNN/IDW (I'm grouping them together as
+    they can be both done using the same function call with slightly
+    different arguments). The others were less suitable either because
+    they had quite high computational costs or the spatial models
+    yielded insufficiently localised variation. Implementations of the
+    latter four methods can be found in the blog posts linked above.
+    
+  </p>
+  <h6 class="docs-header">What packages are those methods going to come from?</h6>
+  <p>
+    Because I'm limiting myself to KNN/IDW I'm going to use
+    the <code>gstat</code> package to estimat the spatial model. It's
+    a pretty easy implementation. I could have used
+    the <code>kknn</code> package and tried to work primarily in
+    <code>sf</code> formats but <code>sf</code> doesn't seem to handle
+    rasters at the moment and I had some trouble
+    getting <code>sf</code> to play nicely with <code>ggplot2</code>. YMMV.
+  </p>
+  <p>
+    
+  </p>
+
+  <h6 class="docs-header">Load packages</h6>
+  <p>
+    <pre>
+      <code>
+	library(tidyverse)
+	library(sf)
+	library(terra)
+	library(viridis)
+      </code>
+    </pre>
+  </p>
+  <p>
+    I'm loading <code>tidyverse</code> for general data
+    handling and visualisation and <code>sf</code> to handle my imported
+    spatial files (I normally don't work with rasters and
+    use <code>sf</code> almost exclusively for vector datasets).
+
+    I'm going to make heavy use of <code>terra</code> when generating
+    and manipulating rasters and doing the interpolations etc.
+
+    And of course, <code>viridis</code> for colour paletting. 
+  </p>
+
+  <h6 class="docs-header">Cropping polygon layer (Christchurch city boundary)</h6>
+  <p>
+    <pre>
+      <code>
+	buffer_dist &lt;- 0
+	chc_ur &lt;- readRDS('datasets/chc_ur_2018_poly.rds')
+	chc_ur &lt;- chc_ur[which(chc_ur$UR2018_V1_00_NAME == 'Christchurch'),]
+	chc_ur &lt;- st_transform(chc_ur, crs = 2193)
+	chc_ur &lt;- st_cast(chc_ur, 'GEOMETRYCOLLECTION') %>% st_collection_extract("POLYGON")
+	chc_ur &lt;- chc_ur %&gt;% st_buffer(dist = buffer_dist) # in meters
+      </code>
+    </pre>
+  </p>
+
+  <h6 class="docs-header">Get point layers</h6>
+  <p>
+    <pre>
+      <code>
+	cas &lt;- readRDS('datasets/chc_allsales_augmented.rds')
+
+	dat &lt;- cas %>% filter(!is.na(median_income),!is.na(hh_rent_rate))
+	dat &lt;- dat[names(dat)[!names(dat) %in% unlist(lapply(dat, anyNA))]]
+
+	dat_sf &lt;-  st_as_sf(x = as.data.frame(dat), coords = c('lon', 'lat'), crs = 4326)
+	dat_sf &lt;- dat_sf %&gt;% st_transform(crs = 2193)
+	dat_sf &lt;- dat_sf[chc_ur,]
+
+	chc_event_dates &lt;- c('q1' = as.Date('2010-09-04'), 'q2' = as.Date('2011-02-22'))
+	b &lt;- dat_sf %&gt;% filter(sale_date &lt; chc_event_dates[1])
+	a &lt;- dat_sf %&gt;%
+	filter(sale_date &gt; chc_event_dates[2])
+	c &lt;- dat_sf %&gt;% select(ln_sale_price)
+      </code>
+    </pre>
+  </p>
+  
+  <h6 class="docs-header">Generate residuals</h6>
+  <p>
+    <pre>
+      <code>
+	genResiduals &lt;- function(dat, model) {
+	  fit &lt;- lm(data = dat, model)
+	  resids &lt;- resid(fit)
+	  dat$err &lt;- resids
+	  dat &lt;- dat %&gt;% select(err)
+	  return(dat)
+	}
+
+	model &lt;- as.formula(ln_sale_price
+	                       ~ poly(building_floor_area, 2, raw = T)
+	                       + poly(land_area, 2, raw = T)
+	                       + decade_built
+	                       + bedrooms
+	                       + bathrooms
+	                       + view_type*view_scope
+	                       + carparks
+	                       ## + dist_cbd
+                               ## + median_income
+	                       ## + hh_rent_rate
+	                       ## + zone_description
+	                       + sale_year)
+	
+	b &lt;- b %&gt;% genResiduals(model)
+	a &lt;- a %&gt;% genResiduals(model)
+	    
+	b &lt;- data.frame(err = b$err, lon = st_coordinates(b)[,1], lat = st_coordinates(b)[,2])
+	a &lt;- data.frame(err = a$err, lon = st_coordinates(a)[,1], lat = st_coordinates(a)[,2])
+	c &lt;- data.frame(price = c$ln_sale_price, lon = st_coordinates(c)[,1], lat = st_coordinates(c)[,2])
+	dsp_b &lt;- terra::vect(b, c('lon', 'lat'), crs = st_crs(2193))
+	dsp_a &lt;- terra::vect(a, c('lon', 'lat'), crs = st_crs(2193))
+	dsp_c &lt;- terra::vect(c, c('lon', 'lat'), crs = st_crs(2193))
+
+	rm(a, b, c, cas, dat, dat_sf, chc_event_dates, model)
+							    
+      </code>
+    </pre>
+  </p>
+
+  <h6 class="docs-header">Generate blank raster layer</h6>
+  <p>
+    <pre>
+      <code>
+	res &lt;- 300
+
+	chc_mask &lt;- terra::vect(as(chc_ur, 'Spatial'))
+	r &lt;- terra::rast(chc_mask, res = res)
+
+	rm(chc_ur)
+      </code>
+    </pre>
+  </p>
+
+  <h6 class="docs-header">Describe, Map, NULL model</h6>
+  <p>
+    <pre>
+      <code>
+	## Descibe
+	
+	## Make a map
+
+	## NULL model
+
+	RMSE &lt;- function(observed, predicted) {
+	  sqrt(mean((predicted - observed)^2, na.rm=TRUE))
+	}
+
+	null &lt;- RMSE(mean(dsp_b$err), dsp_b$err)
+	null
+      </code>
+    </pre>
+  </p>
+
+  <h6 class="docs-header">Generate the Hedonic Residual Delta Surface</h6>
+  <p>
+    <pre>
+      <code>
+	## KNN interp functions
+
+	nnRaster &lt;- function(dtm, model, raster, mask_layer, nmax = 5, idp = 0) {
+	  d &lt;- data.frame(terra::geom(dtm)[,c("x", "y")], terra::as.data.frame(dtm))
+	  gs &lt;- gstat::gstat(formula=model, locations=~x+y, data=d, nmax=nmax, set=list(idp = idp))
+	  interp &lt;- terra::interpolate(raster, gs, debug.level=0)
+	  nnmsk &lt;- terra::mask(interp, mask_layer)
+	  return(nnmsk)
+	}
+
+	nnGetDelta &lt;- function(b, a, model = as.formula(err~1), raster, mask_layer, nmax, idp) {
+	  delta &lt;- nnRaster(a, model = model, raster = r, mask_layer = chc_mask, nmax = nmax, idp = idp) -
+	              nnRaster(b, model = model, raster = r, mask_layer = chc_mask, nmax = nmax, idp = idp)
+	  return(delta)
+	}
+
+	
+	## Delta surface
+	
+	# model &lt;- as.formula(err~1)
+	delta &lt;- nnGetDelta(dsp_b, dsp_a, raster = r, mask_layer = chc_mask, nmax = 100, idp = 1)
+	terra::plot(delta, 1)
+      </code>
+    </pre>
+  </p>
+
+  <h6 class="docs-header">CV the spatial model</h6>
+  <p>
+    <pre>
+      <code>
+	## CV the KNN against NULL spatial model
+	dtm &lt;- dsp_b
+
+	d &lt;- data.frame(terra::geom(dtm)[,c("x", "y")], terra::as.data.frame(dtm))
+	rmsenn &lt;- rep(NA, 5)
+	set.seed(3895476)
+	kf &lt;- sample(1:5, nrow(dtm), replace=TRUE)
+	for (k in 1:5) {
+	  test &lt;- d[kf == k, ]
+	  train &lt;- d[kf != k, ]
+	  gscv &lt;- gstat::gstat(formula=err~1, locations=~x+y, data=train, nmax=5, set=list(idp = 0))
+	  p &lt;- predict(gscv, test, debug.level=0)$var1.pred
+	  rmsenn[k] &lt;- RMSE(test$err, p)
+	}
+	rmsenn
+	mean(rmsenn)
+	perf &lt;- 1 - (mean(rmsenn) / null)
+	round(perf, 3)
+
+	rm(test, train, gscv, p, rmsenn, perf)
+
+
+	## Might be worthwhile CVing against the after set. i.e. after
+	## set is the test set (don't need 5FCV in that case).
+      </code>
+    </pre>
+  </p>
+
+  <h6 class="docs-header">Generate a data support measure</h6>
+  <p>
+    <pre>
+      <code>
+	## Data support measure
+	## https://rspatial.org/terra/analysis/8-pointpat.html
+
+	aggregation_factor &lt;- 1
+	rd &lt;- terra::rast(chc_mask, res = res*aggregation_factor)
+	nc &lt;- terra::rasterize(dsp_b, rd, fun = function(i){length(i)})
+	nc &lt;- terra::mask(nc, chc_mask)
+	nc &lt;- disagg(nc, aggregation_factor)
+	terra::plot(nc)
+	terra::plot(log(nc))
+	terra::plot(chc_mask, add=TRUE)						      
+      </code>
+    </pre>
+  </p>
+
+  <h6 class="docs-header">Do some visualisaton</h6>
+  <p>
+    <pre>
+      <code>
+	## Visualise
+	## ggplot2 for raster color values and alpha combined
+
+	names(nc) &lt;- c('dens')
+	names(delta) &lt;- c('err', 'na')
+
+	nc_df &lt;- as.data.frame(stars::st_as_stars(nc$dens), xy = TRUE)
+	delta_df &lt;- as.data.frame(stars::st_as_stars(delta$err), xy = TRUE)
+
+	merged &lt;- merge(nc_df, delta_df)
+
+	## Plot with log data support as alpha variable
+	ggplot(data = na.omit(merged)) +
+	  geom_tile(aes(x = x, y = y, fill = err, alpha = log(dens))) +
+	  scale_fill_viridis()
+
+	## Cranking up the contrast
+	## Endcode to stop the extreme values hogging the colour spectrum
+	endcode &lt;- function(vec, threshold) {
+	  vec[which(vec &gt; threshold)] &lt;- threshold
+	  vec[which(vec &lt; threshold*-1)] &lt;- threshold*-1
+	  return(vec)
+	}
+
+	## Plot with endcoding
+	merged$end &lt;- endcode(merged$err, 0.1)
+	ggplot(data = na.omit(merged)) +
+	  geom_tile(aes(x = x, y = y, fill = end, alpha = log(dens))) +
+	  scale_fill_viridis()
+
+	## With points
+	ggplot(data = na.omit(merged)) +
+	  geom_point(data = a, aes(x = lon, y = lat), size = 0.1, col = 'red') +
+	  geom_point(data = b, aes(x = lon, y = lat), size = 0.1, col = 'blue') +
+	  ## geom_point(data = c, aes(x = lon, y = lat), size = 0.1) +
+	  geom_tile(aes(x = x, y = y, fill = end, alpha = log(dens))) +
+	  scale_fill_viridis()
+
+	## Hollow out the near zero changes to identify areas of interest only
+	hollow &lt;- function(vec, threshold) {
+	  vec[which(vec &lt; threshold & vec &gt; threshold*-1)] &lt;- NA
+	  return(vec)
+	}
+
+	## Plot hollowed delta WITHOUT endcoding
+	merged$hol &lt;- hollow(merged$err, 0.05)
+	ggplot(data = na.omit(merged)) +
+	  geom_tile(aes(x = x, y = y, fill = hol, alpha = log(dens))) +
+	  scale_fill_viridis()
+
+	## Plot hollowed delta WITH endcoding
+	merged$hol &lt;- hollow(merged$end, 0.05)
+	ggplot(data = na.omit(merged)) +
+	  geom_tile(aes(x = x, y = y, fill = hol, alpha = log(dens))) +
+	  scale_fill_viridis()
+
+	## With points
+	ggplot(data = na.omit(merged)) +
+	  geom_point(data = a, aes(x = lon, y = lat), size = 0.1, col = 'red') +
+	  geom_point(data = b, aes(x = lon, y = lat), size = 0.1, col = 'blue') +
+	  ## geom_point(data = c, aes(x = lon, y = lat), size = 0.1) +
+	  geom_tile(aes(x = x, y = y, fill = end, alpha = log(dens))) +
+	  scale_fill_viridis()
+	
+      </code>
+    </pre>
+  </p>
+
+
+  
+</div>

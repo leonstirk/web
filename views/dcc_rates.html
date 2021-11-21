@@ -1,0 +1,116 @@
+<div id="dcc_rates" class="docs-section">
+  <h4 class="">DCC Rates data</h4>
+  <p>
+    I have been working with Dunedin property data for a while and
+    their ratings database has been kicking around the back of my
+    brain for a while.
+
+    All local/city councils collect rates. Consequently, all of them
+    keep a database of ratings information associated with each
+    property.
+
+    Most are publically accessible. Presumably so that homeowners can look
+    up their own property or properties to keep track of how much they
+    are liable to pay. The way that most councils deal with this is to
+    have some search function where you punch in your street address
+    and the site returns the rating record. This means that there is
+    no real systematic way of looking up all the ratings records
+    unless you had a list of all the stree addresses. Also the POST
+    requests of the search forms obscure the record urls which are
+    often hashed or have some way of making it difficult to
+    systematically look through the url format.
+    
+    I did have a half-hearted attempt at scraping
+    the DCC rates website a while back but I never worked out a satisfactorily systematic
+    way to do it.
+
+    Anyway, I thought I would have another look at it.
+  </p>
+  <h6 class="docs-header">header</h6>
+  <p>
+    My opdorg package has a couple of functions that can retrieve
+    spatial datasets.
+    </p>
+  <p>
+    <pre>
+      <code>
+library(tidyverse)
+library(rvest)
+library(snakecase)
+library(opdorg)
+
+tmp &lt;- opdorg::retrieveREST('https://apps.dunedin.govt.nz/arcgis/rest/services/Public/',
+                               'Rates',
+                               '0',
+                               'OBJECTID')
+
+names(tmp) &lt;- snakecase::to_any_case(names(tmp), 'snake')
+
+################################################################
+
+## ids &lt;- sample(tmp$assessment_id, 20)
+ids &lt;- tmp$assessment_id
+ids &lt;- split(ids, ceiling(seq_along(ids)/100))
+k &lt;- 1
+ids &lt;- ids[[k]]
+
+b &lt;- Sys.time()
+
+rates_list &lt;- list()
+for(i in 1:length(ids)) {
+  url &lt;- paste0('https://www.dunedin.govt.nz/services/rates-information/rates?ratingID=',ids[i])
+  html &lt;- rvest::read_html(url)
+  tb &lt;- rvest::html_table(html)
+  tb &lt;- tb[-1]
+
+  n &lt;- length(tb)
+
+  for(j in 1:(n-1)) {
+    a &lt;- tb[[j]][-1,] %&gt;% dplyr::pull(2)
+    names(a) &lt;- tb[[j]][-1,] %&gt;% dplyr::pull(1)
+    tb[[j]] &lt;- a
+  }
+
+  names(tb[[n]]) &lt;- snakecase::to_any_case(names(tb[[n]]))
+  tb[[n]] &lt;- tb[[n]] %&gt;% tidyr::pivot_wider(names_from = description,
+  values_from = c(factor, amount, rate_or_charge)) %&gt;% unlist
+
+  rates_list[[i]] &lt;- unlist(tb)
+}
+
+
+rates_df &lt;- dplyr::bind_rows(rates_list)
+drop_cols &lt;- names(which(unlist(lapply(rates_df, function(x) {
+any(stringr::str_detect(x, 'Total Charge')) }))))
+rates_df &lt;- rates_df[,which(!names(rates_df) %in% drop_cols)]
+
+names(rates_df) &lt;- names(rates_df) %&gt;%
+  stringr::str_replace_all('[\\(\\)]', '') %&gt;%
+  snakecase::to_any_case('snake')
+
+rates_df$ratepayer_names &lt;- rates_df$ratepayer_names %&gt;%
+  str_replace_all('([:lower:])(?=[:upper:])', '\\1//')
+
+print(Sys.time()-b)
+
+saveRDS(rates_df, paste0('datasets/set',k,'.rds'))	   
+      </code>
+    </pre>
+  </p>
+  <h6 class="docs-header">header</h6>
+  <p>
+    I was a little on the fence about releasing the ratepayer names in the
+    aggrgated data.
+
+    I'm certain that the public nature of the ratings
+    record is correct.
+
+    I certainly think it would be a real blow for transparency if the
+    data were completely anonymised. Certainly I don't think it's at
+    all appropriate to have a UK system of anonymous land
+    ownership. That's some truly fucked up shit.
+    
+    I've released the code and anyone game to take the 25 hours or so
+    to access the ratings records. 
+  </p>
+</div>
