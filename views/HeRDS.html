@@ -532,6 +532,32 @@
 	  return(vec)
 	}
 
+	####################################################################################################
+	## Compare before and after rasters with normalised scales
+	
+	rast_list  &lt;- list(
+	  "b" = b_rast,
+	  "a" = a_rast
+	)
+
+	plotRasters &lt;- function(rast, nc_df) {
+	  names(rast)[1] &lt;- 'err'
+	  tmp &lt;- merge(nc_df,
+	  as.data.frame(stars::st_as_stars(rast$err), xy = TRUE))
+
+	  ggplot(data = na.omit(tmp)) +
+	    geom_tile(aes(x = x, y = y, fill = err, alpha = log(dens))) +
+	    scale_fill_viridis(limits = c(-0.2, 0.2), oob = scales::squish) +
+	    coord_equal()
+	}
+
+	plot_list &lt;- lapply(rast_list, function(x) { plotRasters(x, nc_df) })
+
+	library(patchwork)
+	(plot_list[[1]])/(plot_list[[2]])
+
+	####################################################################################################
+	
 	## Plot with endcoding
 	merged$end &lt;- endcode(merged$err, 0.1)
 	ggplot(data = na.omit(merged)) +
