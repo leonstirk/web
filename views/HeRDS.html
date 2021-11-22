@@ -361,7 +361,7 @@
 	dsp_a &lt;- terra::vect(a, c('lon', 'lat'), crs = st_crs(2193))
 	dsp_c &lt;- terra::vect(c, c('lon', 'lat'), crs = st_crs(2193))
 
-	rm(a, b, c, cas, dat, dat_sf, chc_event_dates, model)
+	rm(cas, dat, dat_sf, chc_event_dates, model)
 							    
       </code>
     </pre>
@@ -431,6 +431,8 @@
     </pre>
   </p>
 
+  <img class="u-max-full-width" src="assets/images/HeRDS_delta_interpolated.png">
+
   <h6 class="docs-header">CV the spatial model</h6>
   <p>
     <pre>
@@ -476,11 +478,23 @@
 	nc &lt;- terra::mask(nc, chc_mask)
 	nc &lt;- disagg(nc, aggregation_factor)
 	terra::plot(nc)
-	terra::plot(log(nc))
-	terra::plot(chc_mask, add=TRUE)						      
+	terra::plot(chc_mask, add=TRUE)
       </code>
     </pre>
   </p>
+
+  <img class="u-max-full-width" src="assets/images/HeRDS_data_support_n.png">
+
+  <p>
+    <pre>
+      <code>	
+	terra::plot(log(nc))
+	terra::plot(chc_mask, add=TRUE)
+      </code>
+    </pre>
+  </p>
+
+  <img class="u-max-full-width" src="assets/images/HeRDS_data_support_log_n.png">
 
   <h6 class="docs-header">Do some visualisaton</h6>
   <p>
@@ -501,7 +515,15 @@
 	ggplot(data = na.omit(merged)) +
 	  geom_tile(aes(x = x, y = y, fill = err, alpha = log(dens))) +
 	  scale_fill_viridis()
+      </code>
+    </pre>
+  </p>
+  
+  <img class="u-max-full-width" src="assets/images/HeRDS_delta_supported.png">
 
+  <p>
+    <pre>
+      <code>	
 	## Cranking up the contrast
 	## Endcode to stop the extreme values hogging the colour spectrum
 	endcode &lt;- function(vec, threshold) {
@@ -515,6 +537,15 @@
 	ggplot(data = na.omit(merged)) +
 	  geom_tile(aes(x = x, y = y, fill = end, alpha = log(dens))) +
 	  scale_fill_viridis()
+      </code>
+    </pre>
+  </p>
+
+  <img class="u-max-full-width" src="assets/images/HeRDS_end.png">
+
+  <p>
+    <pre>
+      <code>	  
 
 	## With points
 	ggplot(data = na.omit(merged)) +
@@ -523,6 +554,13 @@
 	  ## geom_point(data = c, aes(x = lon, y = lat), size = 0.1) +
 	  geom_tile(aes(x = x, y = y, fill = end, alpha = log(dens))) +
 	  scale_fill_viridis()
+      </code>
+    </pre>
+  </p>
+  
+  <p>
+    <pre>
+      <code>	  
 
 	## Hollow out the near zero changes to identify areas of interest only
 	hollow &lt;- function(vec, threshold) {
@@ -538,6 +576,8 @@
       </code>
     </pre>
   </p>
+
+  <img class="u-max-full-width" src="assets/images/HeRDS_hollow.png">
 
   <p>
     <pre>
@@ -563,11 +603,10 @@
 	  ## geom_point(data = c, aes(x = lon, y = lat), size = 0.1) +
 	  geom_tile(aes(x = x, y = y, fill = end, alpha = log(dens))) +
 	  scale_fill_viridis()
-	
       </code>
     </pre>
   </p>
 
-
+  <img class="u-max-full-width" src="assets/images/HeRDS_end_hollow_points.png">
   
 </div>
