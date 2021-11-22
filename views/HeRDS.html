@@ -185,32 +185,36 @@
     analysis. For various practical reasons I stick to K nearest
     neighbours/inverse distance weighting methods for interpolation
     and implement a very basic raster based data support metric.
-
+  </p>
+  <p>
     That said, the area of spatial stats is pretty broad and pretty
     deep. The interested reader might start to gain a better understanding of
     this code as well as spatial analyses generally by having a read
     of some of the below resources.
-
+  </p>
     As far as interpolation, I took inspiration from three very good blog
     post tutorials. I'd recommend checking them out for some more
     depth on various methods. You can find the
     posts <a href="https://swilke-geoscience.net/post/spatial_interpolation/">here</a>, <a href="https://rspatial.org/terra/analysis/4-interpolation.html">here</a>,
     and <a href="https://timogrossenbacher.ch/2018/03/categorical-spatial-interpolation-with-r/">here</a>.
-    
+  </p>
+  <p>
     Given that this code uses a number of different data formats as
     I move to and from raster and vector
     layers, <a href="https://geocompr.github.io/post/2021/spatial-classes-conversion/">this
     post</a> on spatial data format conversions is potentially useful
     to anyone less familiar with all the ins and outs of spatial data
     handling in R.
-
+  </p>
+  <p>
     Finally, <a href="https://rspatial.org/index.html">This site</a>
     is a fairly comprehensive set of vignettes for data handling and
     analysis with the R <code>terra</code> package (and
     the <code>raster</code> package, but I try to stick
     with <code>terra</code> as it is the more recent implementation of
     the <code>raster</code> package).
-
+  </p>
+  <p>
     Of course the semi-official current spatial data format is the
     "simple features" format of the <code>sf</code> package and I do
     also make some use of that package and so some familiarity with
@@ -531,13 +535,27 @@
 	ggplot(data = na.omit(merged)) +
 	  geom_tile(aes(x = x, y = y, fill = hol, alpha = log(dens))) +
 	  scale_fill_viridis()
+      </code>
+    </pre>
+  </p>
 
+  <p>
+    <pre>
+      <code>	  
 	## Plot hollowed delta WITH endcoding
 	merged$hol &lt;- hollow(merged$end, 0.05)
 	ggplot(data = na.omit(merged)) +
 	  geom_tile(aes(x = x, y = y, fill = hol, alpha = log(dens))) +
 	  scale_fill_viridis()
+      </code>
+    </pre>
+  </p>
 
+  <img class="u-max-full-width" src="assets/images/HeRDS_end_hollow.png">
+  
+  <p>
+    <pre>
+      <code>
 	## With points
 	ggplot(data = na.omit(merged)) +
 	  geom_point(data = a, aes(x = lon, y = lat), size = 0.1, col = 'red') +
