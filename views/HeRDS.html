@@ -21,7 +21,7 @@
     the effect on the price variable <em>caused</em> by the addition
     of a deck. I won't really get into the finer details of
     identification here, but suffice to say that that the formulation
-    of (probabalistically falsifiable) Fisherian hypotheses to
+    of (probabilistically falsifiable) Fisherian hypotheses to
     identify the size and significance of the effect is the basic
     template for most (particularly micro) econometric research.
   </p>
@@ -176,7 +176,7 @@
     </ol>
     The HeRDS acronym recalls the above process. Specifically, <em>hedonically</em>
     generated <em>residuals</em> are interpolated, and the surfaces
-    differenced to form a <em>delta</em> or change <em>suface</em>.
+    differenced to form a <em>delta</em> or <em>change</em> surface.
   </p>
   
   <h5 class="docs-header">Developing HeRDS with code examples</h5>    
@@ -255,7 +255,7 @@
   <h6 class="docs-header">What packages are those methods going to come from?</h6>
   <p>
     Because I'm limiting myself to KNN/IDW I'm going to use
-    the <code>gstat</code> package to estimat the spatial model. It's
+    the <code>gstat</code> package to estimate the spatial model. It's
     a pretty easy implementation. I could have used
     the <code>kknn</code> package and tried to work primarily in
     <code>sf</code> formats but <code>sf</code> doesn't seem to handle
@@ -286,7 +286,7 @@
     I'm going to make heavy use of <code>terra</code> when generating
     and manipulating rasters and doing the interpolations etc.
 
-    And of course, <code>viridis</code> for colour paletting. 
+    And of course, <code>viridis</code> for ggplot colour palettes. 
   </p>
 
   <h6 class="docs-header">Cropping polygon layer (Christchurch city boundary)</h6>
