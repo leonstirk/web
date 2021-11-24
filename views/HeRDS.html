@@ -634,5 +634,88 @@
   </p>
 
   <img class="u-max-full-width" src="assets/images/HeRDS_end_hollow_points.png">
+
+  <h6 class="docs-header">Point prediction</h6>
+  <p>
+    The last thing that I kind of want to do a code snippet for is the
+    point predictions of the spatial model.
+  </p>
+  <p>
+    So far I've used the before-quake data to generate a spatial
+    model that I've then projected onto a raster which has become the
+    unit of analysis. And that's been good. Not so much for the
+    ability to interpolate into pixels for which there is less
+    information but for the "smoothing" effect of rasterisation within
+    the (before-quake) information rich areas. After all, I've just
+    nulled out the pixels for which there hasn't been any supporting
+    before-quake data.
+  </p>
+  <p>
+    What I do want to be able to see though is the degree to which a
+    spatial model built on the before quake residuals predicts the
+    residuals of the after-quake points. That is, to bypass the raster
+    stage entirely and calculate the difference between the
+    after-quake residuals (the spatial variation in price unmodelled
+    in the initial hedonic control stage) and the residual values that
+    the after-quake data are <em>predicted</em> to have based on a
+    spatial model constructed using the before-quake residuals.
+  </p>
+  <p>
+    Just writing that I realise that something that is relatively
+    straightforward in my head sounds like a convoluted mess when
+    trying to explain. I'll come back and tidy up the intuition when I
+    get a chance. The accompanying code is equally hacky but might
+    clarify things a little. There's definitely two modelling stages
+    here... I dunno... there is a better way to explain this.
+  </p>
+  <p>
+    Like I say, I'll come back and tidy it up. For now, code:
+  </p>
+  <p>
+    <pre>
+      <code>
+	## Project spatial model onto the after points directly (i.e. no interpolation)
+
+	dtm &lt;- dsp_b
+	model &lt;- as.formula(err~1)
+	nmax &lt;- 100
+	idp &lt;- 1
+
+	d &lt;- data.frame(terra::geom(dtm)[,c("x", "y")], terra::as.data.frame(dtm))
+	gs &lt;- gstat::gstat(formula=model, locations=~x+y, data=d, nmax=nmax, set=list(idp = idp))
+	
+	dtm &lt;- dsp_a
+	d &lt;- data.frame(terra::geom(dtm)[,c("x", "y")], terra::as.data.frame(dtm))
+
+	preds &lt;- terra::predict(gs, d)
+
+	delta &lt;- cbind(d, preds) %&gt;%
+	  select(err, var1.pred, lon, lat) %&gt;%
+	  rename(pred = var1.pred) %&gt;%
+	  select(err, pred, lon, lat) %&gt;%
+	  mutate(delta = err - pred)
+
+	ggplot() +
+	  geom_point(data = delta, aes(x = lon, y = lat, col = delta)) +
+	  scale_color_viridis(limits = c(-0.3, 0.3), oob = scales::squish) +
+	  coord_equal()
+      </code>
+    </pre>
+  </p>
+
+  <img class="u-max-full-width" src="assets/images/HeRDS_point_preds.png">
   
+  <p>
+    Yeah... for sure not my most elegant work... Whatever.
+  </p>
+
+  <p>
+    Pic is still spot on.
+  </p>
+
+  <p>
+    Might be worth checking pixel prediction variance... Seems to be
+    quite high variance in Merivale and whatever the good suburbs
+    are. Like, there were clearly some <em>deals</em>.
+  <p>
 </div>
