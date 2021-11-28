@@ -212,7 +212,10 @@
     analysis with the R <code>terra</code> package (and
     the <code>raster</code> package, but I try to stick
     with <code>terra</code> as it is the more recent implementation of
-    the <code>raster</code> package).
+    the <code>raster</code> package). For those interested in working
+    extensively with <code>sf</code> I
+    recommend <a href="https://www.spatial-analysis-r.org/">this</a>, <a href="https://r-spatial.org/r/2017/03/19/invalid.html">this</a>,
+    and <a href="https://r-spatial.github.io/sf/index.html">this</a>.
   </p>
   <p>
     Of course the semi-official current spatial data format is the
@@ -421,10 +424,11 @@
 	  return(delta)
 	}
 
-	
-	## Delta surface
-	
-	# model &lt;- as.formula(err~1)
+	model &lt;- as.formula(err~1)
+
+	b_rast &lt;- nnRaster(dsp_b, model = model, raster = r, mask_layer = chc_mask, nmax = 100, idp = 1)
+	a_rast &lt;- nnRaster(dsp_a, model = model, raster = r, mask_layer = chc_mask, nmax = 100, idp = 1)
+				     
 	delta &lt;- nnGetDelta(dsp_b, dsp_a, raster = r, mask_layer = chc_mask, nmax = 100, idp = 1)
 	terra::plot(delta, 1)
       </code>
