@@ -1,1 +1,160 @@
-hello
+<div id="time_to_find_a_job" class="docs-section">
+  <h4 class="">Time to find a job</h4>
+  <p>
+    I am looking for a job.
+  </p>
+
+  <p>
+    Employers typically have HR departments with staff whose only jobs is to
+    build and maintain these hiring pipelines. Those that don't seem
+    increasingly to be outsourcing the process to third party
+    recruitment agencies.
+  </p>
+  <p>
+    Honestly, I feel outgunned by all of this. I'm just one person. I don't like talking about
+    myself. I am deeply sceptical of the kind of language that seems
+    to be used when advertising ones professional
+    credentials. I feel like a bird of
+    paradise. Required to perform an elaborate courtship display involving
+    song, dance, and hyperspecific physical displays. It's just that I
+    have no instinct for it. I actively dislike the tacit rules of
+    engagement. Some of it seems to fly in the face of what employers
+    purportedley want.
+  </p>
+
+
+  <p>
+    Surely I can level the playing field somewhat by using my knowlege
+    of R to make the search more efficient, more effective, and more
+    enjoyable. I can gain a little more insight into the game
+    itself. I'm telling employers that I'm a good researcher. That I
+    know a lot about data and maths and stuff. It would almost be
+    weird if I didn't plug it all into R and turn the optimization
+    crank.
+  </p>
+
+  <p>
+    I have some basic search parameters.  I'm not really bothered about public or
+    private sector. The main restrictions are that I want jobs that fit my
+    skillset and my interests and they must be located in the
+    UK/Europe.
+  </p>
+
+  <p>
+    The flow of the project will be to cast a wide net for potential
+    jobs by scraping a number of job sites based on some
+    keywords. I'll do a bit of manual searching to build up an idea of
+    what keywords give me what I think are relevant results. I mean,
+    job sites do spend a lot of time tailoring their algorithms to
+    serve you jobs that might be a good fit based on your
+    searches. Although I do want to maintain a sort of ``open'' or
+    ``exploratory'' search strategy rather than being pushed down
+    particular routes by recommendation algorithms.
+  </p>
+
+  <p>
+    I fully anticipate having to put a fair amount of ``manual'' work
+    into each application. I'd like to be able to do some analysis of the aggregate data to
+    optimize the work that I have to do. For instance, I'd like to
+    make sure that I prioritize applications that close soon To
+    maximise the number of ``shots'' I can take. I'd also like to
+    formulate some sense of how closely aligned my interests and
+    skills are to the job itself while also developing some
+    understanding something of the qualitative nature of the workplace
+    in question. For example, there are some job postings where a
+    reading of the description provides a fairly solid if not exact
+    outline of what the job entails. That is, they communicate the
+    nature of the work with both precision and
+    accuracy. Interestingly, job listings for tradespeople typically
+    takes this form. ``Wanted: qualified plumber/gasfitters''. It
+    could fit on a postage stamp. There is, to my mind, another kind of job posting that
+    communicates with neither accuracy or precision. Solow and Orwell
+    turn in their graves. infantilising. coporatese word salad. vague
+    about the job (imprecise). Unfortunately I can't speak to the
+    accuracy but I maintain a very powerful suspicion that imprecision
+    can be read as a strong signal that there is no
+    small amount of gold-plating involved.
+  </p>
+
+  <p>
+    It should be entertaining to be able to form some insights into
+    the way that job postings are written. My impression is that it is
+    a specific species of prose that is highly sylised and
+    idiomatic. I'm just fascinated by the language used the cliches
+    and dead metaphors. In many ways, it's a shame Orwell wasn't around
+    to see the development of NLP. 
+  </p>
+  
+  <p>
+    R should then output application documents, typically a CV and covering
+    letter, tailored to the job in question. I can do this by
+    automatically generating text files that can be used to prompt
+    ChatGPT. Such a prompt will need to have information about me and
+    my background and information about the desired qualities for the
+    advertised role.
+  </p>
+  <p>
+    Again, I suspect that I'll need to spend some time massaging the
+    ChatGPT output for a final pass. Let's be real LLMs are here to
+    stay. I'm hoping that the LLM will make me sound like more of a
+    normal, appealing candidate and I can pare back anything that I
+    think is too egregious.
+  </p>
+  
+  
+
+  <p>
+    I'm going to load some packages.
+  </p>
+  
+  <p>
+    <pre>
+      <code>
+	library(tidyverse)
+	library(rvest)
+	library(snakecase)
+	library(stringr)
+	# Text mining tools
+	library(tidytext)
+      </code>
+    </pre>
+  </p>
+  
+  <p>
+    I can scrape some data from the UK govt job site
+  </p>
+
+  <p>
+    <pre>
+      <code>
+	
+      </code>
+    </pre>
+  </p>
+
+  <p>
+    Clean up the data a little
+  </p>
+  
+  <p>
+    <pre>
+      <code>
+	
+      </code>
+    </pre>
+  </p>
+  
+  <p>
+    And start text mining the descriptions.
+  </p>
+  <p>
+    Honestly the most annoying part was actually just getting the data
+    from the scrape into something that would tokenize nicely.
+    Once I was there, a number of R NLP tutorials were happy to give me
+    starter code for any number of interesting things.
+  </p>
+  
+  
+
+  
+</div>
